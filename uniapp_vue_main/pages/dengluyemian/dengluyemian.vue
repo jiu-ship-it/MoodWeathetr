@@ -34,8 +34,8 @@
     props: {},
     data() {
       return {
-		  MyEmail:'',
-		  MyPass:'',
+		  MyEmail:null,
+		  MyPass:null,
 	  };
     },
     methods: {

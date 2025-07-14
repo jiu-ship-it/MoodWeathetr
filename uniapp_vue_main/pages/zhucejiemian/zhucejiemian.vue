@@ -5,30 +5,33 @@
       <view class="flex-col">
         <view class="flex-row justify-between items-center group">
           <text class="font text">昵称</text>
-          <text class="font_2">昵称不可用！</text>
+          <text class="font_2 NameRed" id="Nerr">昵称不可用！</text>
         </view>
         <view class="flex-col justify-start items-start text-wrapper">
-          <text class="font_3 text_2 text_3">请输入昵称</text>
+          <input class="font_3 text_2 text_3" placeholder='请输入昵称' v-model="Name"></input>
         </view>
       </view>
       <view class="mt-26 flex-col">
         <view class="flex-row justify-between group_2">
           <text class="font text_4">邮箱</text>
-          <text class="font_2 text_5">邮箱不可用！</text>
+          <text class="font_2 text_5 EmailRed" id="Eerr">邮箱不可用！</text>
         </view>
         <view class="flex-col justify-start items-start text-wrapper">
-          <text class="font_3 text_2 text_6">请输入邮箱</text>
+          <input class="font_3 text_2 text_6" placeholder="请输入邮箱" v-model="Email"></input>
         </view>
       </view>
       <view class="mt-26 flex-col">
-        <text class="self-start font text_7">密码</text>
+		<view class="flex-row justify-between group_2">
+			<text class="self-start font text_7">密码</text>
+			<text class="font_2 text_pass PassRed" id="Perr">密码不可用！</text>
+		</view>
         <view class="mt-10 flex-col justify-start items-start self-stretch text-wrapper">
-          <text class="font_3 text_2">请输入密码</text>
+          <input class="font_3 text_2" password="true" placeholder="请输入密码" v-model="Password"></input>
         </view>
       </view>
       <view class="mt-26 flex-row">
-        <view class="flex-col justify-start items-center text-wrapper_2"><text class="font text_8">返回</text></view>
-        <view class="flex-col justify-start items-center text-wrapper_3 ml-15">
+        <view class="flex-col justify-start items-center text-wrapper_2" @click="Back"><text class="font text_8">返回</text></view>
+        <view class="flex-col justify-start items-center text-wrapper_3 ml-15" @click="Sign">
           <text class="font text_9">注册</text>
         </view>
       </view>
@@ -41,10 +44,41 @@
     components: {},
     props: {},
     data() {
-      return {};
+      return {
+		  Name:null,
+		  Email:null,
+		  Password:null,
+	  };
     },
 
-    methods: {},
+    methods: {
+		Back(){
+			uni.navigateBack()
+		},
+		Sign(){//比对name，email等数据，防止出现用户冲突等情况，同时确认格式
+			var reaserch_at = RegExp(/@/)
+			var reaserch_com = RegExp(/.com/)
+			if(reaserch_at.test(this.Email)==false || reaserch_com.test(this.Email)==false){
+				console.log("Eerr")
+				document.getElementById("Eerr").style.visibility = 'visible'
+			}else{
+				document.getElementById("Eerr").style.visibility = 'hidden'
+			}
+			if(this.Password == null){
+				console.log("Perr")
+				document.getElementById("Perr").style.visibility = 'visible'
+			}else{
+				document.getElementById("Perr").style.visibility = 'hidden'
+			}
+			if(this.Name == null){
+				console.log("Nerr")
+				document.getElementById("Nerr").style.visibility = 'visible'
+			}else{
+				document.getElementById("Nerr").style.visibility = 'hidden'
+			}
+		}
+		
+	},
   };
 </script>
 
@@ -175,5 +209,18 @@
   .text_9 {
     color: #f5f5f5;
     line-height: 27.03rpx;
+  }
+  .NameRed{
+	  visibility: hidden;
+  }
+  .EmailRed{
+	  visibility: hidden;
+  }
+  .PassRed{
+	  visibility: hidden;
+  }
+  .text_pass{
+	  line-height: 27.05rpx;
+	  float: right;
   }
 </style>

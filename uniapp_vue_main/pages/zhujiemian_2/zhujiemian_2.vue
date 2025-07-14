@@ -307,6 +307,7 @@
     left: 50%;
     top: 379.55rpx;
     transform: translateX(-50%);
+	visibility: hidden;//接收纸条
   }
   .font_1 {
     font-size: 29.13rpx;
@@ -380,6 +381,7 @@
     left: 50%;
     top: 557.04rpx;
     transform: translateX(-50%);
+	visibility: hidden;//写纸条
   }
   .text_10 {
     color: #1e1e1e;
