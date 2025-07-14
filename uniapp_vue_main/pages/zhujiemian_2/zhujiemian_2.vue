@@ -1,20 +1,25 @@
 <template>
   <view class="flex-col relative page">
     <view class="shrink-0 self-stretch section"></view>
+	
     <view class="flex-row justify-between items-center section_2 pos">
       <text class="font">暖言纸条</text>
       <view class="flex-row items-center">
         <image
           class="image"
-          src="https://ide.code.fun/api/image?token=6870b54f2b2a8200119ceee7&name=61bdb76f9c7c27375790c89c641b1ba1.png"
+          src='/static/money.png'
         />
-        <view class="flex-col justify-start items-start text-wrapper"><text class="font_2 text">10000000</text></view>
+		<scroll-view scroll-x="true" class="flex-col justify-start items-start text-wrapper" ><text class="font_2 text">10000</text></scroll-view>
       </view>
     </view>
+	<!--顶部菜单-->
+	
     <view class="flex-col items-center section_3 pos_2">
       <text class="font">欢迎来到暖言纸条</text>
       <text class="font_2 text_2 mt-18">在这里，每一句话都是温暖的拥抱每一个字都充满了爱与关怀</text>
     </view>
+	<!--中间标题-->
+	
     <view class="flex-col justify-start items-center text-wrapper_2 pos_3">
       <text class="text_3">📝 接收暖言</text>
     </view>
@@ -39,37 +44,35 @@
         历史暖言
       </text>
     </view>
+	
     <view class="flex-col justify-start section_4 pos_7">
       <view class="flex-row justify-between equal-division">
         <view class="flex-col justify-start items-center equal-division-item">
           <image
             class="image_2"
-            src="https://ide.code.fun/api/image?token=6870b54f2b2a8200119ceee7&name=630fdbc11dccdc6d74ad3cecdd9496de.png"
+            src='/static/home.png'
           />
         </view>
         <view class="flex-col justify-start items-center equal-division-item">
           <image
             class="image_2"
-            src="https://ide.code.fun/api/image?token=6870b54f2b2a8200119ceee7&name=85e6c4051832477789a9c724127ba087.png"
+            src='/static/setting.png'
           />
         </view>
         <view class="flex-col justify-start items-center equal-division-item">
           <image
             class="image_2"
-            src="https://ide.code.fun/api/image?token=6870b54f2b2a8200119ceee7&name=3de231db41c1ba966cf2300f4c51043e.png"
+            src='/static/music.png'
           />
         </view>
       </view>
     </view>
+	<!--底部菜单-->
+	
     <view class="flex-col section_5 pos_22">
       <view class="flex-col">
         <text class="self-start font_1 text_7">写暖言：</text>
-        <view class="flex-col justify-start items-end self-stretch image-wrapper mt-10">
-          <image
-            class="shrink-0 image_3"
-            src="https://ide.code.fun/api/image?token=6870b54f2b2a8200119ceee7&name=273917bf9d9aa8dd26e1eb38f476c395.png"
-          />
-        </view>
+        <textarea maxlength="1000" class="flex-col justify-start items-end self-stretch image-wrapper mt-10" placeholder="请输入内容"></textarea>
       </view>
       <view class="flex-row justify-center group mt-213">
         <view class="flex-col justify-start items-center text-wrapper_6"><text class="font_1 text_8">取消</text></view>
@@ -78,6 +81,8 @@
         </view>
       </view>
     </view>
+	
+	
     <view class="flex-col self-start relative section_6 pos_33">
       <view class="flex-col items-start">
         <text class="text_10">收到暖言：</text>
@@ -91,7 +96,7 @@
       </view>
       <image
         class="image_4 pos_9"
-        src="https://ide.code.fun/api/image?token=6870b54f2b2a8200119ceee7&name=7e070fc97df1a6e7316e5573026a6d68.png"
+        src='/static/x.png'
       />
     </view>
   </view>
@@ -111,7 +116,7 @@
 
 <style scoped lang="css">
   .mt-213 {
-    margin-top: 387.74rpx;
+    margin-top: 200rpx;
   }
   .ml-15 {
     margin-left: 27.31rpx;
@@ -307,7 +312,7 @@
     left: 50%;
     top: 379.55rpx;
     transform: translateX(-50%);
-	visibility: hidden;//接收纸条
+	visibility: visible;//写纸条
   }
   .font_1 {
     font-size: 29.13rpx;
@@ -322,10 +327,12 @@
   .image-wrapper {
     margin-right: 5.83rpx;
     padding: 121.97rpx 0 9.1rpx;
+	padding-top: 20rpx;
     background-color: #ffffff;
     border-radius: 14.56rpx;
     overflow: hidden;
     border: solid 1.82rpx #d9d9d9;
+	height: 500rpx;
   }
   .image_3 {
     margin-right: 7.28rpx;
@@ -381,7 +388,7 @@
     left: 50%;
     top: 557.04rpx;
     transform: translateX(-50%);
-	visibility: hidden;//写纸条
+	visibility: hidden;//收纸条
   }
   .text_10 {
     color: #1e1e1e;
@@ -429,4 +436,5 @@
     right: 10.92rpx;
     top: 14.56rpx;
   }
+
 </style>

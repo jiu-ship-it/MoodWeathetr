@@ -1,5 +1,7 @@
 {
-  "globalStyle": {},
+  "globalStyle": {
+	  "navigationStyle":"custom"
+  },
   "pages": [
     {
       "path": "pages/chushijiemian/chushijiemian",

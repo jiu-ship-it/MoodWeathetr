@@ -48,6 +48,7 @@
 		  Name:null,
 		  Email:null,
 		  Password:null,
+		  IsUpload:true,
 	  };
     },
 
@@ -75,6 +76,11 @@
 				document.getElementById("Nerr").style.visibility = 'visible'
 			}else{
 				document.getElementById("Nerr").style.visibility = 'hidden'
+			}
+			if(this.IsUpload == true){
+				uni.navigateTo({
+					url:"/pages/zhujiemian_2/zhujiemian_2"
+				})
 			}
 		}
 		
