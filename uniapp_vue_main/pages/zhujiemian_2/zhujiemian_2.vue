@@ -20,7 +20,7 @@
     </view>
 	<!--中间标题-->
 	
-    <view class="flex-col justify-start items-center text-wrapper_2 pos_3">
+    <view class="flex-col justify-start items-center text-wrapper_2 pos_3" @click="GetWord">
       <text class="text_3">📝 接收暖言</text>
     </view>
     <view class="flex-col justify-start items-center text-wrapper_3 pos_4">
@@ -31,7 +31,7 @@
       </text>
     </view>
     <view class="flex-col justify-start items-center text-wrapper_4 pos_5">
-      <text class="font_3 text_5">
+      <text class="font_3 text_5" @click="OpenWrite">
         ✍️
         <br />
         写暖言
@@ -69,13 +69,13 @@
     </view>
 	<!--底部菜单-->
 	
-    <view class="flex-col section_5 pos_22">
+    <view class="flex-col section_5 pos_22" id="write">
       <view class="flex-col">
         <text class="self-start font_1 text_7">写暖言：</text>
         <textarea maxlength="1000" class="flex-col justify-start items-end self-stretch image-wrapper mt-10" placeholder="请输入内容"></textarea>
       </view>
       <view class="flex-row justify-center group mt-213">
-        <view class="flex-col justify-start items-center text-wrapper_6"><text class="font_1 text_8">取消</text></view>
+        <view class="flex-col justify-start items-center text-wrapper_6" @click="CancelWrite"><text class="font_1 text_8">取消</text></view>
         <view class="flex-col justify-start items-center text-wrapper_7 ml-15">
           <text class="font_4 text_9">发送</text>
         </view>
@@ -83,21 +83,17 @@
     </view>
 	
 	
-    <view class="flex-col self-start relative section_6 pos_33">
+    <view class="flex-col self-start relative section_6 pos_33" id="get">
       <view class="flex-col items-start">
         <text class="text_10">收到暖言：</text>
         <text class="font_1 mt-19">你好</text>
       </view>
       <view class="flex-row justify-end group_2">
-        <view class="flex-col justify-start items-center text-wrapper_8"><text class="font_1 text_11">确定</text></view>
+        <view class="flex-col justify-start items-center text-wrapper_8" @click="CancelGet"><text class="font_1 text_11">确定</text></view>
         <view class="flex-col justify-start items-center text-wrapper_9 ml-10">
           <text class="font_4 text_12">回礼</text>
         </view>
       </view>
-      <image
-        class="image_4 pos_9"
-        src='/static/x.png'
-      />
     </view>
   </view>
 </template>
@@ -107,10 +103,37 @@
     components: {},
     props: {},
     data() {
-      return {};
+      return {
+		  page:"main"
+	  };
     },
 
-    methods: {},
+    methods: {
+		OpenWrite(){
+			if(this.page == "main"){
+				document.getElementById("write").style.visibility = "visible"
+				this.page = "Write"
+			}
+		},
+		CancelWrite(){
+			if(this.page == "Write"){
+				document.getElementById("write").style.visibility = "hidden"
+				this.page = "main"
+			}
+		},
+		GetWord(){
+			if(this.page == "main"){
+				document.getElementById("get").style.visibility = "visible"
+				this.page = "GetWord"
+			}
+		},
+		CancelGet(){
+			if(this.page == "GetWord"){
+				document.getElementById("get").style.visibility = "hidden"
+				this.page = "main"
+			}
+		}
+	},
   };
 </script>
 
@@ -312,7 +335,7 @@
     left: 50%;
     top: 379.55rpx;
     transform: translateX(-50%);
-	visibility: visible;//写纸条
+	visibility: hidden;//写纸条
   }
   .font_1 {
     font-size: 29.13rpx;
