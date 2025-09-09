@@ -78,9 +78,21 @@
 				document.getElementById("Nerr").style.visibility = 'hidden'
 			}
 			if(this.IsUpload == true){
-				uni.navigateTo({
-					url:"/pages/zhujiemian_2/zhujiemian_2"
+				uni.request({
+					url:"http://192.168.28.1:5000/API/register",
+					method:'POST',
+					header:{'Contnt-type':'application/json'},
+					data:{id:this.Email,name:this.Name,password:this.Password},
+					success: (res) => {
+						console.log(res.data)
+					},
+					fail: (err) => {
+						console.log("err!!!")
+					}
 				})
+				//uni.navigateTo({
+					//url:"/pages/zhujiemian_2/zhujiemian_2"
+				//})
 			}
 		}
 		

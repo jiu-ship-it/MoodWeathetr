@@ -46,7 +46,7 @@
 				console.log("err")
 				document.getElementById('err').style.visibility = 'visible'
 			}else{
-				console.log("up")
+				console.log("upload")
 				document.getElementById('err').style.visibility = 'hidden'
 			}//如果什么都没有不传输数据且报错,如果正常则上传用户数据!!!!比对服务器信息，存在才可以进入页面
 		},

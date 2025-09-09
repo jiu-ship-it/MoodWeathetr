@@ -23,7 +23,7 @@
     <view class="flex-col justify-start items-center text-wrapper_2 pos_3" @click="GetWord">
       <text class="text_3">📝 接收暖言</text>
     </view>
-    <view class="flex-col justify-start items-center text-wrapper_3 pos_4">
+    <view class="flex-col justify-start items-center text-wrapper_3 pos_4" @click="StorePage">
       <text class="font_3 text_4">
         🛍️
         <br />
@@ -47,19 +47,19 @@
 	
     <view class="flex-col justify-start section_4 pos_7">
       <view class="flex-row justify-between equal-division">
-        <view class="flex-col justify-start items-center equal-division-item">
+        <view class="flex-col justify-start items-center equal-division-item" @click="home">
           <image
             class="image_2"
             src='/static/home.png'
           />
         </view>
-        <view class="flex-col justify-start items-center equal-division-item">
+        <view class="flex-col justify-start items-center equal-division-item" @click="setting">
           <image
             class="image_2"
             src='/static/setting.png'
           />
         </view>
-        <view class="flex-col justify-start items-center equal-division-item">
+        <view class="flex-col justify-start items-center equal-division-item" @click="music">
           <image
             class="image_2"
             src='/static/music.png'
@@ -81,6 +81,7 @@
         </view>
       </view>
     </view>
+	<!--写暖言-->
 	
 	
     <view class="flex-col self-start relative section_6 pos_33" id="get">
@@ -95,6 +96,7 @@
         </view>
       </view>
     </view>
+	<!--接受暖言界面-->
   </view>
 </template>
 
@@ -132,7 +134,12 @@
 				document.getElementById("get").style.visibility = "hidden"
 				this.page = "main"
 			}
-		}
+		},
+		StorePage(){
+			uni.navigateTo({
+				url:"/pages/shangdian/shangdian"
+			})
+		},
 	},
   };
 </script>
