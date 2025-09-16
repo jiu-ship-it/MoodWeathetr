@@ -4,35 +4,35 @@
   },
   "pages": [
     {
-      "path": "pages/chushijiemian/chushijiemian",
+      "path": "pages/Initial_Interface/Initial_Interface",
       "style": {}
     },
     {
-      "path": "pages/dengluyemian/dengluyemian",
+      "path": "pages/Login_Interface/Login_Interface",
       "style": {}
     },
     {
-      "path": "pages/zhucejiemian/zhucejiemian",
+      "path": "pages/Regist_Interface/Regist_Interface",
       "style": {}
     },
     {
-      "path": "pages/zhujiemian_2/zhujiemian_2",
+      "path": "pages/Main_Page/Main_Page",
       "style": {}
     },
     {
-      "path": "pages/yinle/yinle",
+      "path": "pages/Music/Music",
       "style": {}
     },
     {
-      "path": "pages/shezhi/shezhi",
+      "path": "pages/Setting/Setting",
       "style": {}
     },
     {
-      "path": "pages/shangdian/shangdian",
+      "path": "pages/Store/Store",
       "style": {}
     },
     {
-      "path": "pages/lishinuanyan/lishinuanyan",
+      "path": "pages/History_Page/History_Page",
       "style": {}
     }
   ]

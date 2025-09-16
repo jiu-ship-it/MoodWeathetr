@@ -52,7 +52,7 @@
 		},
 		GoToZhuCe(){
 			uni.navigateTo({
-				url:'/pages/zhucejiemian/zhucejiemian'
+				url:'/pages/Main_Page/Main_Page'
 			})
 		}
 		

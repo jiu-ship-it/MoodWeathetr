@@ -1,7 +1,7 @@
 <template>
   <view class="flex-col justify-start relative page">
     <view class="shrink-0 section"></view>
-    <text class="text pos">暖言纸条</text>
+    <text class="text pos LargeTitle">暖言纸条</text>
     <view @click="New" class="flex-col justify-start items-center text-wrapper pos_2" ><text class="text_2" >进入</text></view>
   </view>
 </template>
@@ -11,7 +11,7 @@
 	  methods: {
 		  New(){
 			  uni.navigateTo({
-			  	url:'/pages/dengluyemian/dengluyemian'
+			  	url:'/pages/Login_Interface/Login_Interface'
 			  })//跳转页面
 		  }
 	  }
@@ -19,6 +19,9 @@
 </script>
 
 <style scoped lang="css">
+	.LargeTitle{
+		-webkit-text-stroke: 1px #ffffff;
+	}
   .page {
     background-color: #ffffff;
     overflow: hidden;

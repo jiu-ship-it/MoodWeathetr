@@ -137,7 +137,7 @@
 		},
 		StorePage(){
 			uni.navigateTo({
-				url:"/pages/shangdian/shangdian"
+				url:"/pages/Store/Store"
 			})
 		},
 	},
