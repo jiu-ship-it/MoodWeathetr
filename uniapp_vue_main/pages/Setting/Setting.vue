@@ -2,6 +2,7 @@
 	<div class="page flex-col section">
 		<div class="halfColor">
 			<view class="flex-col justify-start items-start text-wrapper pos"><text class="text">暖言纸条</text></view>
+			
 			<!-- 这里是顶部菜单 -->
 			<view class="flex-col justify-start section_3 pos_4">
 				<view class="flex-row justify-between equal-division">
@@ -16,13 +17,14 @@
 					</view>
 				</view>
 			</view>
+			
 			<!-- 这里是底部菜单 -->
-			<div class="jumbotron jumbotron-fluid jumbotron_pos">
+			<div class="jumbotron jumbotron-fluid jumbotron_pos EditData">
 			  <div class="container">
 			    <form>
 			      <div class="form-group">
 			        <label for="exampleInputEmail1">新昵称(每月修改一次)</label>
-			        <input class="form-control">
+			        <input class="form-control"><!-- 名称修改 -->
 			      </div>
 			      <div class="form-group">
 			        <label for="exampleInputPassword1">个人简介(50字)</label>
@@ -32,6 +34,29 @@
 			    </form>
 			  </div>
 			</div>
+			
+			<view><!-- 设置列表 -->
+				<div class="list-group listPos">
+				  <a href="#" class="list-group-item list-group-item-action listColor" aria-current="true">个性化设置</a>
+				  <a href="#" class="list-group-item list-group-item-action listColor">语言设置：中文</a>
+				  <a href="#" class="list-group-item list-group-item-action listColor">您的奖章</a>
+				  <a href="#" class="list-group-item list-group-item-action listColor">隐私条款</a>
+				  <a class="list-group-item list-group-item-action disabled listColor">关于我们</a>
+				</div>
+			</view>
+
+			<view class="ProfitThings ProfitPos"><!-- 个人简介 -->
+				<div class="jumbotron jumbotron-fluid ProfitPos">
+				  <div class="container">
+				    <h1 class="display-4">名称：{{MyName}}</h1>
+				    <p class="lead">简介：{{Introduction}}</p>
+				  </div>
+				</div>
+			</view>
+			<view>
+				<img src="static/image/noon.png" alt="头像" class="ProImag"/>
+			</view>
+			
 		</div>
 	</div>
 </template>
@@ -41,7 +66,11 @@
 		components: {},
 		props: {},
 		data() {
-			return {};
+			return {
+				NowPage:"main",
+				MyName:"ME",
+				Introduction:"helloWorld"
+			};
 		},
 
 		methods: {},
@@ -59,10 +88,42 @@
 		height: 35%;
 		width: 80%;
 	}
+	.ProImag{
+		position: absolute;
+		display: flex;
+		left: 50%;
+		top: 10%;
+		transform: translateX(-50%);
+		border-radius: 75%;
+		width: 320rpx;
+		height: 320rpx;
+		border: 2rpx solid #000000;
+		overflow: hidden;
+	}
+	.ProfitPos{
+		position: absolute;
+		display: flex;
+		width: 100%;
+		top: 30%;
+		opacity: 0.85;
+	}
+	.listColor{
+		opacity: 0.85;
+		border: 2rpx solid #666;
+		border-radius: 8rpx;
+	}
+	.listPos{
+		display: flex;
+		position: absolute;
+		top: 60%;
+		width: 100%;
+	}
 	.mt-37 {
 		margin-top: 67.35rpx;
 	}
-
+	.EditData{
+		visibility: hidden;
+	}
 	.page {
 		background-color: #d3d3d3;
 		overflow: hidden;
@@ -86,7 +147,7 @@
 	}
 
 	.halfColor {
-		backdrop-filter: blur(10px);
+		backdrop-filter: blur(5px);
 		width: 100%;
 		height: 100%;
 	}

@@ -52,7 +52,7 @@
 		},
 		GoToZhuCe(){
 			uni.navigateTo({
-				url:'/pages/Regist_Interface/Regist_Interface'
+				url:'/pages/Main_Page/Main_Page'
 			})
 		}
 		

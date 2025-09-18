@@ -40,10 +40,6 @@
   #app {
     width: 100vw;
     height: 100vh;
-	overflow: hidden;
-	  /* 确保没有默认边距 */
-	margin: 0;
-	padding: 0;
   }
   
 
