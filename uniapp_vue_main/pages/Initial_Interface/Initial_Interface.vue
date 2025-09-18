@@ -1,7 +1,7 @@
 <template>
   <view class="flex-col justify-start relative page">
     <view class="shrink-0 section"></view>
-    <text class="text pos LargeTitle">暖言纸条</text>
+    <text class="text pos LargeTitle flex-row justify-start">暖言纸条</text>
     <view @click="New" class="flex-col justify-start items-center text-wrapper pos_2" ><text class="text_2" >进入</text></view>
   </view>
 </template>
@@ -43,15 +43,20 @@
   }
   .text {
     color: #000000;
-    font-size: 116.5rpx;
+    font-size: 116rpx;
     font-family: Inter;
     font-weight: 700;
     line-height: 111.03rpx;
+	white-space: nowrap;
   }
   .pos {
-    position: absolute;
+    /* position: absolute;
     right: 131.8rpx;
-    top: 408.04rpx;
+    top: 408.04rpx; */
+	position: absolute;
+	left: 50%;
+	top: 408.04rpx;
+	transform: translateX(-50%);
   }
   .text-wrapper {
     padding: 32.77rpx 0 29.13rpx;

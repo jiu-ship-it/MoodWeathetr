@@ -37,7 +37,7 @@
         写暖言
       </text>
     </view>
-    <view class="flex-col justify-start items-center text-wrapper_5 pos_6">
+    <view class="flex-col justify-start items-center text-wrapper_5 pos_6" @click="ToHistory">
       <text class="font_3 text_6">
         📝
         <br />
@@ -140,6 +140,24 @@
 				url:"/pages/Store/Store"
 			})
 		},
+		ToHistory(){
+			uni.navigateTo({
+				url:"/pages/History_Page/History_Page"
+			})
+		},
+		setting(){
+			uni.navigateTo({
+				url:"/pages/Setting/Setting"
+			})
+		},
+		music(){
+			uni.navigateTo({
+				url:"/pages/Music/Music"
+			})
+		},
+		home(){
+			alert("您已经在主界面了(๑•̀ㅂ•́)و✧")
+		}
 	},
   };
 </script>

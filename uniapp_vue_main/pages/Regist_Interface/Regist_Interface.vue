@@ -57,7 +57,19 @@
 			uni.navigateBack()
 		},
 		Sign(){//比对name，email等数据，防止出现用户冲突等情况，同时确认格式
-			var reaserch_at = RegExp(/@/)
+			uni.request({
+				url:"http://192.168.28.1:5000/API/register",
+				method:'POST',
+				header:{'Contnt-type':'application/json'},
+				data:{id:this.Email,name:this.Name,password:this.Password},
+				success: (res) => {
+					console.log(res.data)
+				},
+				fail: (err) => {
+					console.log("err!!!")
+				}
+			})
+			/* var reaserch_at = RegExp(/@/)
 			var reaserch_com = RegExp(/.com/)
 			if(reaserch_at.test(this.Email)==false || reaserch_com.test(this.Email)==false){
 				console.log("Eerr")
@@ -78,25 +90,12 @@
 				document.getElementById("Nerr").style.visibility = 'hidden'
 			}
 			if(this.IsUpload == true){
-				uni.request({
-					url:"http://192.168.28.1:5000/API/register",
-					method:'POST',
-					header:{'Contnt-type':'application/json'},
-					data:{id:this.Email,name:this.Name,password:this.Password},
-					success: (res) => {
-						console.log(res.data)
-					},
-					fail: (err) => {
-						console.log("err!!!")
-					}
-				})
+				 */
 				//uni.navigateTo({
 					//url:"/pages/zhujiemian_2/zhujiemian_2"
 				//})
-			}
+			},
 		}
-		
-	},
   };
 </script>
 
