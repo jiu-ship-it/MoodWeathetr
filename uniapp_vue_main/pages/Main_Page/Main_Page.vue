@@ -9,7 +9,7 @@
           class="image"
           src='/static/money.png'
         />
-		<scroll-view scroll-x="true" class="flex-col justify-start items-start text-wrapper" ><text class="font_2 text">10000</text></scroll-view>
+		<scroll-view scroll-x="true" class="flex-col justify-start items-start text-wrapper" ><text class="font_2 text">💰：10000</text></scroll-view>
       </view>
     </view>
 	<!--顶部菜单-->
@@ -50,26 +50,26 @@
         <view class="flex-col justify-start items-center equal-division-item" @click="home">
           <image
             class="image_2"
-            src='/static/home.png'
+            src='/static/image/home.png'
           />
         </view>
         <view class="flex-col justify-start items-center equal-division-item" @click="setting">
           <image
             class="image_2"
-            src='/static/setting.png'
+            src='/static/image/setting.png'
           />
         </view>
         <view class="flex-col justify-start items-center equal-division-item" @click="music">
           <image
             class="image_2"
-            src='/static/music.png'
+            src='/static/image/music.png'
           />
         </view>
       </view>
     </view>
 	<!--底部菜单-->
 	
-    <view class="flex-col section_5 pos_22" id="write">
+    <view class="flex-col section_5 pos_22" id="write":style="{visibility:WriteVisible}">
       <view class="flex-col">
         <text class="self-start font_1 text_7">写暖言：</text>
         <textarea maxlength="1000" class="flex-col justify-start items-end self-stretch image-wrapper mt-10" placeholder="请输入内容"></textarea>
@@ -84,7 +84,7 @@
 	<!--写暖言-->
 	
 	
-    <view class="flex-col self-start relative section_6 pos_33" id="get">
+    <view class="flex-col self-start relative section_6 pos_33" id="get" :style="{visibility:GetVisible}">
       <view class="flex-col items-start">
         <text class="text_10">收到暖言：</text>
         <text class="font_1 mt-19">你好</text>
@@ -106,32 +106,34 @@
     props: {},
     data() {
       return {
-		  page:"main"
+		  page:"main",
+		  GetVisible:"hidden",
+		  WriteVisible:"hidden"
 	  };
     },
 
     methods: {
 		OpenWrite(){
 			if(this.page == "main"){
-				document.getElementById("write").style.visibility = "visible"
+				this.WriteVisible = "visible"
 				this.page = "Write"
 			}
 		},
 		CancelWrite(){
 			if(this.page == "Write"){
-				document.getElementById("write").style.visibility = "hidden"
+				this.WriteVisible = "hidden"
 				this.page = "main"
 			}
 		},
 		GetWord(){
 			if(this.page == "main"){
-				document.getElementById("get").style.visibility = "visible"
+				this.GetVisible = "visible"
 				this.page = "GetWord"
 			}
 		},
 		CancelGet(){
 			if(this.page == "GetWord"){
-				document.getElementById("get").style.visibility = "hidden"
+				this.GetVisible = "hidden"
 				this.page = "main"
 			}
 		},

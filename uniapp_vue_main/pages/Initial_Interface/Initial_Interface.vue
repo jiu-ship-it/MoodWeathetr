@@ -10,7 +10,7 @@
 	export default {
 	  methods: {
 		  New(){
-			  uni.navigateTo({
+			  uni.redirectTo({
 			  	url:'/pages/Login_Interface/Login_Interface'
 			  })//跳转页面
 		  }

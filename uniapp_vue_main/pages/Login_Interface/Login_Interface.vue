@@ -14,7 +14,7 @@
           <view class="flex-col justify-start items-start self-stretch text-wrapper">
             <input class="font_2 text text_3" placeholder="请输入密码" v-model="MyPass"></input>
           </view>
-          <text class="self-end err text_4" id="err">信息有误！</text>
+          <text class="self-end err text_4" :style="{visibility:err_visible}" id="err">信息有误！</text>
           <view @click="Submit" class="flex-col justify-start items-center self-stretch text-wrapper_2">
             <text class="font text_5">登入</text>
           </view>
@@ -36,6 +36,7 @@
       return {
 		  MyEmail:null,
 		  MyPass:null,
+		  err_visible:"false"
 	  };
     },
     methods: {
@@ -44,15 +45,17 @@
 			var reaserch_com = RegExp(/.com/)
 			if(reaserch_at.test(this.MyEmail)==false || reaserch_com.test(this.MyEmail)==false || this.MyPass == null){
 				console.log("err")
-				document.getElementById('err').style.visibility = 'visible'
+				this.err_visible = "visible"
+				//document.getElementById('err').style.visibility = 'visible'
 			}else{
 				console.log("upload")
-				document.getElementById('err').style.visibility = 'hidden'
+				this.err_visible = "hidden"
+				//document.getElementById('err').style.visibility = 'hidden'
 			}//如果什么都没有不传输数据且报错,如果正常则上传用户数据!!!!比对服务器信息，存在才可以进入页面
 		},
 		GoToZhuCe(){
 			uni.navigateTo({
-				url:'/pages/Main_Page/Main_Page'
+				url:'/pages/Regist_Interface/Regist_Interface'
 			})
 		}
 		
