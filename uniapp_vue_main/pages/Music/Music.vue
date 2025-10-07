@@ -80,12 +80,12 @@
 		},
 		onShow() {
 			//this.fetchMusicAPI();
-			this.OnPlayData = getApp().globalData.backgroundAudioCtx
-			if(this.OnPlayData == null){
+			this.OnPlayData = getApp().globalData.backgroundAudioCtx;
+			if(this.OnPlayData == null || getApp().globalData.isPause == true){
 				this.isPlay = "▶";
-			}else{
+			}else if(getApp().globalData.isPause == false && this.OnPlayData != null){
 				this.isPlay = "⏸";
-			}
+			};
 		},
 
 		methods: {
@@ -131,9 +131,11 @@
 				if(this.ChangeIsPlay && this.OnPlayData != null){
 					this.isPlay = "⏸";
 					this.OnPlayData.play();
+					getApp().globalData.isPause = false;
 				}else if(this.ChangeIsPlay == false || this.OnPlayData == null){
 					this.isPlay = "▶";
 					this.OnPlayData.pause();
+					getApp().globalData.isPause = true;
 				}
 			},
 
