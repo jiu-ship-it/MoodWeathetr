@@ -1,3 +1,4 @@
+
 <script>
   export default {
     onLaunch: function () {
@@ -17,9 +18,13 @@
   ** 请将全局样式拷贝到项目的全局 CSS 文件或者当前页面的顶部 **
   ** 否则页面将无法正常显示                                  **
   ************************************************************/
-
   html {
     font-size: 16px;
+  }
+  page{
+	  width: 100%;
+	  height: 100%;
+	  box-sizing: border-box;
   }
 
   body {
