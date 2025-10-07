@@ -10,6 +10,9 @@
     onHide: function () {
       console.log('App Hide');
     },
+	globalData:{
+		backgroundAudioCtx: null // 存储后台播放的音频实例
+	}
   };
 </script>
 

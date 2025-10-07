@@ -55,7 +55,7 @@
 				MusicData: [{
 						name: "鸳鸯债",
 						author: "纸嫁衣",
-						url: "https://m801.music.126.net/20251007123440/b79c5b6f4cf946096fa501327c01062f/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/12624068215/cac2/00b9/ab3b/2df6bfb2c29586555b2c0a6b6573ca87.mp3?vuutv=4tRE/ExHBRGkq8+7W5aGNpFliUAsEW7SpRO+FMql529TPSEuWlrc4nyVuK9LTnkYIttFgRI6r37p/Lh6bi7WZOy7lc6kxC6IPgzOKtq23CBZGCAnTHpyudOWUr0kesNiq8o9lHPyln3T4aJ9EuCM0A==&cdntag=bWFyaz1vc193ZWIscXVhbGl0eV9zdGFuZGFyZA"
+						url: "https://m801.music.126.net/20251007132244/e2a4fb786e7c10da82d45b0efed6e3ba/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/12624068215/cac2/00b9/ab3b/2df6bfb2c29586555b2c0a6b6573ca87.mp3?vuutv=BB+xX5kBKQHb0UFeIa9fHYGT2dQQG6cY+xqHV9xw2ws8V2O17hIgC2Vyi1JKsU9o2UzJiClBAS66rqBX1AFmp2NowV4RKpXYrRCz8tdGnhArmqzqpuqygCGf4LAkxCzmHAAms97LsVyxl3xc4m6YrA==&cdntag=bWFyaz1vc193ZWIscXVhbGl0eV9zdGFuZGFyZA"
 					},
 					{
 						name: "abc",
@@ -80,6 +80,7 @@
 		},
 		onShow() {
 			//this.fetchMusicAPI();
+			this.OnPlayData = getApp().globalData.backgroundAudioCtx
 			if(this.OnPlayData == null){
 				this.isPlay = "▶";
 			}else{
@@ -106,7 +107,8 @@
 				if (this.OnPlayData == null) {
 					console.log("null") //初始值判断
 				} else {
-					this.OnPlayData.pause()
+					uni.removeStorageSync('NowPlay');
+					this.OnPlayData.pause();
 					this.OnPlayData.offPlay();
 					this.OnPlayData.offPause();
 					this.OnPlayData.offEnded();
@@ -119,6 +121,7 @@
 				audioContext.volume = 1;
 				audioContext.loop = false; //防止循环播放
 				this.OnPlayData = audioContext; //保存实例数据
+				getApp().globalData.backgroundAudioCtx = this.OnPlayData
 				audioContext.play() //开始播放
 				this.isPlay = "⏸";
 				this.ChangeIsPlay = true;
