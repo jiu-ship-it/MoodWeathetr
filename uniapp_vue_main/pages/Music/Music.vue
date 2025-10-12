@@ -198,7 +198,7 @@
 
 	.section_2 {
 		padding: 36.41rpx 7.28rpx 0 14.56rpx;
-		background-color: #ffffff80;
+		background-color: #e5e5e5fa;
 		border-radius: 14.56rpx;
 		filter: drop-shadow(0rpx 7.28rpx 3.64rpx #0c0c0d0d, 0rpx 7.28rpx 3.64rpx #0c0c0d1a);
 		overflow: hidden;

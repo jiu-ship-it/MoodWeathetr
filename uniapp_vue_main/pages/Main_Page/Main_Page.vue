@@ -44,6 +44,13 @@
         历史暖言
       </text>
     </view>
+	<view class="flex-col justify-start items-center text-wrapper_4 pos_8" @click="ToNotebook">
+	  <text class="font_3 text_6">
+	    📔
+	    <br />
+	    笔记本
+	  </text>
+	</view>
 	
     <view class="flex-col justify-start section_4 pos_7">
       <view class="flex-row justify-between equal-division">
@@ -316,9 +323,14 @@
   }
   .pos_6 {
     position: absolute;
-    left: 50%;
+    left: 154rpx;
     top: 1077.67rpx;
-    transform: translateX(-50%);
+    /* transform: translateX(-50%); */
+  }
+  .pos_8 {
+    position: absolute;
+    right: 147.45rpx;
+    top: 1077.67rpx;
   }
   .text_6 {
     text-align: center;
