@@ -154,6 +154,11 @@
 				url:"/pages/History_Page/History_Page"
 			})
 		},
+		ToNotebook(){
+			uni.navigateTo({
+				url:"/pages/MainNoteSet/MainNoteSet"
+			})
+		},
 		setting(){
 			uni.navigateTo({
 				url:"/pages/Setting/Setting"

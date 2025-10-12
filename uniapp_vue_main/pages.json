@@ -34,6 +34,14 @@
     {
       "path": "pages/History_Page/History_Page",
       "style": {}
-    }
+    },
+	{
+	  "path": "pages/MainNoteSet/MainNoteSet",
+	  "style": {}
+	},
+	{
+	  "path": "pages/EditNote/EditNote",
+	  "style": {}
+	}
   ]
 }
