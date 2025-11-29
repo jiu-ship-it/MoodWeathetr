@@ -13,7 +13,7 @@
 				</view>
 			</view>
 			
-			<view class="flex-row justify-between items-center section_3">
+			<view class="flex-row justify-between items-center section_3" @click="ToEdit">
 				<view class="flex-col items-start">
 					<text class="text_4">笔记标题</text>
 					<text class="text_5 mt-11">2025-10-12</text>
@@ -62,7 +62,13 @@
 			return {};
 		},
 
-		methods: {},
+		methods: {
+			ToEdit(){
+				uni.navigateTo({
+					url:"/pages/EditNote/EditNote"
+				})
+			}
+		},
 	};
 </script>
 
