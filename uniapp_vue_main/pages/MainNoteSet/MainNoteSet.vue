@@ -4,7 +4,7 @@
 		<view class="flex-col section mt-21">
 			<view class="flex-row group">
 				<view class="flex-row justify-between flex-1 section_2">
-					<text class="font text_2">搜索笔记</text>
+					<textarea class="font text_2" placeholder="请输入标题"></textarea>
 					<image class="image"
 						src="https://ide.code.fun/api/image?token=68eb23dc9520a30011f3beeb&name=4aab7942bbb248ea1508400d3100f725.png" />
 				</view>
@@ -20,9 +20,9 @@
 				</view>
 				<view class="flex-row">
 					<image class="image_2"
-						src="https://ide.code.fun/api/image?token=68eb23dc9520a30011f3beeb&name=b222b87d510dbb319fb6478585ec803d.png" />
+						src="/static/image/smileICON.png" />
 					<image class="image_3"
-						src="https://ide.code.fun/api/image?token=68eb23dc9520a30011f3beeb&name=2a9bbd492d5ab45a3db0b0699ea2d726.png" />
+						src="/static/image/DeleteICon.png" />
 				</view>
 			</view>
 			
@@ -39,15 +39,15 @@
 			<view class="flex-row justify-between equal-division">
 				<view class="flex-col justify-start items-center equal-division-item">
 					<image class="image_4"
-						src="https://ide.code.fun/api/image?token=68eb23dc9520a30011f3beeb&name=630fdbc11dccdc6d74ad3cecdd9496de.png" />
+						src="/static/image/home.png" />
 				</view>
 				<view class="flex-col justify-start items-center equal-division-item">
 					<image class="image_4"
-						src="https://ide.code.fun/api/image?token=68eb23dc9520a30011f3beeb&name=85e6c4051832477789a9c724127ba087.png" />
+						src="/static/image/setting.png" />
 				</view>
 				<view class="flex-col justify-start items-center equal-division-item">
 					<image class="image_4"
-						src="https://ide.code.fun/api/image?token=68eb23dc9520a30011f3beeb&name=3de231db41c1ba966cf2300f4c51043e.png" />
+						src="/static/image/music.png" />
 				</view>
 			</view>
 		</view>

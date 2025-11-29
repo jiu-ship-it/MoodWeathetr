@@ -36,7 +36,7 @@
       return {
 		  MyEmail:null,
 		  MyPass:null,
-		  err_visible:"false"
+		  err_visible:"hidden"
 	  };
     },
     methods: {

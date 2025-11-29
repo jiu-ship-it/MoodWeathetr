@@ -393,6 +393,7 @@
   }
   .image-wrapper {
     margin-right: 5.83rpx;
+	max-width: 100%;
     padding: 121.97rpx 0 9.1rpx;
 	padding-top: 20rpx;
     background-color: #ffffff;

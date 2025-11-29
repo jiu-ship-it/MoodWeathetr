@@ -6,13 +6,13 @@
 			<!-- 这里是底部菜单 -->
 			<view class="flex-col justify-start section_3 pos_4">
 				<view class="flex-row justify-between equal-viewision">
-					<view class="flex-col justify-start items-center equal-viewision-item">
+					<view class="flex-col justify-start items-center equal-viewision-item" @click="home">
 						<image class="image" src="/static/image/home.png" />
 					</view>
-					<view class="flex-col justify-start items-center equal-viewision-item">
+					<view class="flex-col justify-start items-center equal-viewision-item" @click="setting">
 						<image class="image" src="/static/image/setting.png" />
 					</view>
-					<view class="flex-col justify-start items-center equal-viewision-item">
+					<view class="flex-col justify-start items-center equal-viewision-item" @click="music">
 						<image class="image" src="/static/image/music.png" />
 					</view>
 				</view>
@@ -84,6 +84,21 @@
 				this.isListVisible = false;
 				this.isEditData = "hidden";
 			},
+			setting(){
+				uni.navigateTo({
+					url:"/pages/Setting/Setting"
+				})
+			},
+			music(){
+				uni.navigateTo({
+					url:"/pages/Music/Music"
+				})
+			},
+			home(){
+				uni.navigateTo({
+					url:"/pages/Main_Page/Main_Page"
+				})
+			}
 		},
 	};
 </script>
