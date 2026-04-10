@@ -1,22 +1,7 @@
 <template>
 	<view class="page flex-col section">
 		<view class="halfColor">
-			<view class="flex-col justify-start items-start text-wrapper pos"><text class="text">暖言纸条</text></view>
-			
-			<!-- 这里是底部菜单 -->
-			<view class="flex-col justify-start section_3 pos_4">
-				<view class="flex-row justify-between equal-viewision">
-					<view class="flex-col justify-start items-center equal-viewision-item" @click="home">
-						<image class="image" src="/static/image/home.png" />
-					</view>
-					<view class="flex-col justify-start items-center equal-viewision-item" @click="setting">
-						<image class="image" src="/static/image/setting.png" />
-					</view>
-					<view class="flex-col justify-start items-center equal-viewision-item" @click="music">
-						<image class="image" src="/static/image/music.png" />
-					</view>
-				</view>
-			</view>
+			<view class="flex-col justify-start items-start text-wrapper pos"><text class="text">MoodWeather</text></view>
 			
 			<view><!-- 设置列表 -->
 				<view class="list-group listPos">
@@ -37,7 +22,7 @@
 				</view>
 			</view>
 			<view>
-				<img src="static/image/noon.png" alt="头像" class="ProImag"/>
+				<img src="static/image/smileICON.png" alt="头像" class="ProImag"/>
 			</view>
 			
 			<view class="jumbotron jumbotron-fluid jumbotron_pos" :style="{visibility:isEditData}">
@@ -56,18 +41,19 @@
 			    </form>
 			  </view>
 			</view>
-			
+
+			<BottomNav current="setting" />
 		</view>
 	</view>
 </template>
 
 <script>
+	import BottomNav from '@/components/BottomNav.vue';
+
 	export default {
-		components: {},
-		props: {},
+		components: { BottomNav },
 		data() {
 			return {
-				NowPage:"main",//当前页面
 				MyName:"ME",//名称
 				Introduction:"helloWorld",//简介
 				isListVisible:false,//是否可使用列表
@@ -84,165 +70,212 @@
 				this.isListVisible = false;
 				this.isEditData = "hidden";
 			},
-			setting(){
-				uni.navigateTo({
-					url:"/pages/Setting/Setting"
-				})
-			},
-			music(){
-				uni.navigateTo({
-					url:"/pages/Music/Music"
-				})
-			},
-			home(){
-				uni.navigateTo({
-					url:"/pages/Main_Page/Main_Page"
-				})
-			}
+
 		},
 	};
 </script>
 
 <style scoped lang="css">
-	@import '../../static/css/BootStrapCss/bootstrap.min.css';
-	.jumbotron_pos{
-		position: absolute;
+	.container {
+		padding: 24rpx;
+	}
+
+	.jumbotron {
+		background: rgba(255, 255, 255, 0.9);
+		border-radius: 16rpx;
+		padding: 20rpx;
+	}
+
+	.display-4 {
+		font-size: 34rpx;
+		line-height: 1.4;
+		margin: 0;
+	}
+
+	.lead {
+		font-size: 26rpx;
+		line-height: 1.5;
+		margin-top: 12rpx;
+	}
+
+	.list-group {
 		display: flex;
-		top: 1%;
-		right: 50%;
-		transform: translate(50%,45%);
-		height: 50%;
-		width: 80%;
+		flex-direction: column;
+		gap: 10rpx;
+	}
+
+	.list-group-item {
+		display: block;
+		padding: 20rpx 24rpx;
+		background: rgba(255, 255, 255, 0.92);
+		color: #263238;
+	}
+
+	.form-group {
+		margin-bottom: 20rpx;
+	}
+
+	.form-control {
+		display: block;
+		width: 100%;
+		height: 72rpx;
+		padding: 0 20rpx;
+		box-sizing: border-box;
+		border: 1rpx solid #c7d7f7;
+		border-radius: 10rpx;
+		background: #ffffff;
+	}
+
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 132rpx;
+		height: 68rpx;
+		padding: 0 24rpx;
+		border-radius: 10rpx;
+		border: none;
+	}
+
+	.btn-primary {
+		background: #3a78ff;
+		color: #ffffff;
+	}
+
+	.disabled {
+		pointer-events: none;
+		opacity: 0.55;
+	}
+
+	.jumbotron_pos{
+		position: fixed;
+		display: flex;
+		left: 32rpx;
+		right: 32rpx;
+		top: 20vh;
+		z-index: 30;
+		width: auto;
+		height: auto;
+		max-height: 65vh;
+		overflow-y: auto;
+		background: rgba(255, 255, 255, 0.96);
+		box-shadow: 0 14rpx 32rpx rgba(0, 0, 0, 0.15);
 	}
 	.ProImag{
-		position: absolute;
-		display: flex;
-		left: 50%;
-		top: 10%;
-		transform: translateX(-50%);
+		display: block;
+		margin: 24rpx auto 16rpx;
 		border-radius: 75%;
-		width: 320rpx;
-		height: 320rpx;
+		width: 190rpx;
+		height: 190rpx;
 		border: 2rpx solid #000000;
 		overflow: hidden;
 	}
 	.ProfitPos{
-		position: absolute;
+		position: relative;
 		display: flex;
 		width: 100%;
-		top: 30%;
-		opacity: 0.85;
+		top: auto;
+		opacity: 1;
+	}
+	.ProfitThings {
+		padding: 0 24rpx;
+		margin-top: 8rpx;
 	}
 	.listColor{
-		opacity: 0.85;
-		border: 2rpx solid #666;
-		border-radius: 8rpx;
+		opacity: 0.92;
+		border: 2rpx solid #8fa5d1;
+		border-radius: 12rpx;
+		text-align: center;
 	}
 	.listPos{
 		display: flex;
-		position: absolute;
-		top: 60%;
+		position: relative;
+		top: auto;
+		padding: 0 24rpx;
+		margin-top: 10rpx;
 		width: 100%;
+		box-sizing: border-box;
 	}
-	.mt-37 {
-		margin-top: 67.35rpx;
-	}
-	.EditData{
-		visibility: visible;
-	}
+
 	.page {
 		background-color: #d3d3d3;
-		overflow: hidden;
-		background-image: url('/static/image/morning.png');
+		overflow: visible;
+		background-image: linear-gradient(165deg, #eff4ff 0%, #d8e5ff 48%, #bed3ff 100%);
 		background-size: 100% 100%;
 		background-repeat: no-repeat;
 		width: 100%;
-		overflow-y: hidden;
+		min-height: 100vh;
+		height: auto;
+		overflow-y: auto;
 		overflow-x: hidden;
-		height: 100%;
 	}
 
 	.section {
 		background-color: #24242433;
-		overflow: hidden;
-		background-image: url('/static/image/morning.png');
+		overflow: visible;
+		background-image: linear-gradient(180deg, #eef3ff 0%, #dde9ff 100%);
 		background-size: 100% 100%;
 		background-repeat: no-repeat;
-		width: 750rpx;
-		height: 1669.3rpx;
+		width: 100%;
+		min-height: 100vh;
+		height: auto;
 	}
 
 	.halfColor {
 		backdrop-filter: blur(5px);
 		width: 100%;
-		height: 100%;
+		min-height: 100vh;
+		height: auto;
+		padding-bottom: 150rpx;
+		box-sizing: border-box;
 	}
 
 	.text-wrapper {
-		padding: 40.05rpx 0;
-		background-color: #d9d9d9b3;
+		padding: 24rpx 0;
+		background-color: rgba(217, 217, 217, 0.7);
+		box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.05);
 	}
 
 	.pos {
-		position: absolute;
+		position: relative;
 		left: 0;
 		right: 0;
 		top: 0;
 	}
 
 	.text {
-		margin-left: 21.84rpx;
+		margin-left: 0;
 		color: #000000;
-		font-size: 65.53rpx;
+		font-size: 52rpx;
+		text-align: center;
+		display: block;
+		width: 100%;
 		font-family: Inter;
-		line-height: 60.62rpx;
+		line-height: 1.2;
 	}
 
-	.text-wrapper_2 {
-		padding: 21.84rpx 0;
-		background-color: #2c2c2c;
-		border-radius: 14.56rpx;
-		overflow: hidden;
-		border-left: solid 1.82rpx #2c2c2c;
-		border-right: solid 1.82rpx #2c2c2c;
-		border-top: solid 1.82rpx #2c2c2c;
-		border-bottom: solid 1.82rpx #2c2c2c;
-	}
 
-	.section_3 {
-		padding: 14.56rpx 0;
-		background-image: linear-gradient(180.9deg, #575757bf 4.2%, #bdbdbdbf 96.2%);
-		overflow: hidden;
-	}
-
-	.pos_4 {
-		position: absolute;
-		left: 0;
-		right: 0;
-		top: 1529.13rpx;
-	}
-
-	.equal-viewision {
-		margin: 0 32.77rpx;
-	}
-
-	.equal-viewision-item {
-		padding: 7.28rpx 0;
-		background-color: #d9d9d980;
-		border-radius: 14.56rpx;
-		width: 109.22rpx;
-		height: 109.22rpx;
-		border-left: solid 1.82rpx #000000;
-		border-right: solid 1.82rpx #000000;
-		border-top: solid 1.82rpx #000000;
-		border-bottom: solid 1.82rpx #000000;
-	}
-
-	.image {
-		width: 87.38rpx;
-		height: 87.38rpx;
-	}
 	.CancelButton{
-		left: 10%;
+		margin-left: 20rpx;
+	}
+
+	label {
+		display: block;
+		font-size: 26rpx;
+		line-height: 1.4;
+		margin-bottom: 8rpx;
+		color: #2c3e50;
+	}
+
+	form {
+		width: 100%;
+	}
+
+	button {
+		font-size: 26rpx;
+	}
+
+	.navigator-hover {
+		opacity: 0.85;
 	}
 </style>

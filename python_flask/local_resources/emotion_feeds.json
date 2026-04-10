@@ -1,0 +1,53 @@
+[
+  {
+    "emotion_tag": "1",
+    "type": "imageText",
+    "title": "低落期自我支持清单",
+    "desc": "先稳住，再行动，从最小步开始。",
+    "detail": "做一件5分钟可完成的小事，建立可控感。",
+    "cover": "images/OIP-C.webp",
+    "is_active": true
+  },
+  {
+    "emotion_tag": "1",
+    "type": "video",
+    "title": "情绪短片：Out of Range",
+    "desc": "当状态偏低时，先接住自己，再慢慢走出去。",
+    "url": "videos/情绪短片_ Out of Range - 1.情绪短片_ Out of Range(Av116278790524636,P1).mp4",
+    "is_active": true
+  },
+  {
+    "emotion_tag": "2",
+    "type": "imageText",
+    "title": "稳定情绪维护法",
+    "desc": "通过固定作息和轻量复盘，保持心态稳定。",
+    "detail": "每天10分钟复盘，记录最稳的一刻。",
+    "cover": "images/way.jpeg",
+    "is_active": true
+  },
+  {
+    "emotion_tag": "2",
+    "type": "video",
+    "title": "治愈短片 Bilby",
+    "desc": "唯有勇敢和爱，才能一往无前。",
+    "url": "videos/1.2019奥斯卡最治愈短片《Bilby》：唯有勇敢和爱，才能一往无前(Av42835796,P1).mp4",
+    "is_active": true
+  },
+  {
+    "emotion_tag": "3",
+    "type": "imageText",
+    "title": "高兴状态巩固法",
+    "desc": "在积极状态下保留节奏，避免过度透支。",
+    "detail": "把兴奋转成行动清单，先完成最关键的一步。",
+    "cover": "images/way.jpeg",
+    "is_active": true
+  },
+  {
+    "emotion_tag": "3",
+    "type": "video",
+    "title": "积极状态放大术",
+    "desc": "趁状态好，把目标拆小并立即推进。",
+    "url": "videos/1.2019奥斯卡最治愈短片《Bilby》：唯有勇敢和爱，才能一往无前(Av42835796,P1).mp4",
+    "is_active": true
+  }
+]

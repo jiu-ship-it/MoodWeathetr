@@ -1,1 +1,51 @@
-/python_flask/.venv
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.python-version
+
+# venv / env
+.venv/
+venv/
+env/
+/python_flask/.venv/
+/my_fc/.venv/
+
+# test / cache / logs
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+*.log
+
+# ---------- Database & local runtime ----------
+*.db
+*.sqlite
+*.sqlite3
+/python_flask/instance/
+/python_flask/uploads/
+/python_flask/local_resources/audio/
+/python_flask/local_resources/images/
+
+# ---------- Frontend (uni-app) ----------
+/uniapp_vue_main/unpackage/
+/uniapp_vue_main/dist/
+/uniapp_vue_main/node_modules/
+
+# ---------- ML models / checkpoints ----------
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.onnx
+/my_fc/checkpoint/
+/my_fc/models/
+
+# ---------- OS / Editor ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

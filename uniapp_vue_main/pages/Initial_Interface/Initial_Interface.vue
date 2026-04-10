@@ -1,7 +1,7 @@
 <template>
   <view class="flex-col justify-start relative page">
     <view class="shrink-0 section"></view>
-    <text class="text pos LargeTitle flex-row justify-start">暖言纸条</text>
+    <text class="text pos LargeTitle flex-row justify-start">MoodWeather</text>
     <view @click="New" class="flex-col justify-start items-center text-wrapper pos_2" ><text class="text_2" >进入</text></view>
   </view>
 </template>

@@ -1,7 +1,7 @@
 <template>
 	<view class="flex-col justify-start relative page">
 		<view class="shrink-0 section"></view>
-		<view class="flex-col justify-start items-start text-wrapper pos"><text class="text">暖言纸条</text></view>
+		<view class="flex-col justify-start items-start text-wrapper pos"><text class="text">MoodWeather</text></view>
 		<view class="flex-col section_2 pos_2">
 			<text class="self-start font text_2">Music</text>
 			<text class="self-start font_2 text_3">音乐</text>
@@ -10,16 +10,14 @@
 				<view class="flex-col group_2 ">
 
 					<scroll-view class="scrollSize" scroll-y="true">
-						<li class="flex-col items-start group_3" v-for="current in MusicData">
-							<view class="flex-col items-start group_3" @click="playMusic(current.url)">
-								<text class="font_2">{{current.name}}</text>
-								<text class="mt-10 self-start font">创作者：{{current.author}}</text>
-							</view>
-						</li>
+						<view class="flex-col items-start group_3" v-for="(current, idx) in MusicData" :key="`${current.name}-${idx}`" @tap="playMusic(current)">
+							<text class="font_2">{{current.name}}</text>
+							<text class="mt-10 self-start font">创作者：{{current.author}}</text>
+						</view>
 					</scroll-view>
 
 					<view class="PauseAndStart">
-						<view class="PauseIcon"  @click="PauseButton">{{isPlay}}</view>
+						<view class="PauseIcon" @tap="PauseButton">{{isPlay}}</view>
 					</view>
 					
 				</view>
@@ -29,57 +27,35 @@
 			</view>
 		</view>
 
-		<view class="flex-col justify-start section_3 pos_3">
-			<view class="flex-row justify-between equal-division">
-				<view class="flex-col justify-start items-center equal-division-item" @click="home">
-					<image class="image" src="/static/image/home.png" />
-				</view>
-				<view class="flex-col justify-start items-center equal-division-item" @click="setting">
-					<image class="image" src="/static/image/setting.png" />
-				</view>
-				<view class="flex-col justify-start items-center equal-division-item" @click="music">
-					<image class="image" src="/static/image/music.png" />
-				</view>
-			</view>
-		</view>
+		<BottomNav current="music" />
 
 	</view>
 </template>
 
 <script>
+	import BottomNav from '@/components/BottomNav.vue';
+	import { BASE_URL } from '@/common/config.js';
+
 	export default {
-		components: {},
-		props: {},
+		components: { BottomNav },
 		data() {
 			return {
 				MusicData: [{
-						name: "鸳鸯债",
-						author: "纸嫁衣",
-						url: "https://m801.music.126.net/20251007132244/e2a4fb786e7c10da82d45b0efed6e3ba/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/12624068215/cac2/00b9/ab3b/2df6bfb2c29586555b2c0a6b6573ca87.mp3?vuutv=BB+xX5kBKQHb0UFeIa9fHYGT2dQQG6cY+xqHV9xw2ws8V2O17hIgC2Vyi1JKsU9o2UzJiClBAS66rqBX1AFmp2NowV4RKpXYrRCz8tdGnhArmqzqpuqygCGf4LAkxCzmHAAms97LsVyxl3xc4m6YrA==&cdntag=bWFyaz1vc193ZWIscXVhbGl0eV9zdGFuZGFyZA"
+						name: "Calm Demo",
+						author: "WarmLabel",
+						url: `${BASE_URL}/api/local-resources/audio/calm_demo.mp3`
 					},
-					{
-						name: "abc",
-						author: "123",
-						url: "null"
-					},
-					{
-						name: "abc",
-						author: "123",
-						url: "null"
-					},
-					{
-						name: "abc",
-						author: "123",
-						url: "null"
-					}
 				],
 				OnPlayData: null,
+				BackgroundAudio: null,
+				downloadedAudioCache: {},
+				CurrentTrackName: '',
 				isPlay: "▶", //▍▍
 				ChangeIsPlay: true,
 			};
 		},
 		onShow() {
-			//this.fetchMusicAPI();
+			this.loadMusicList();
 			this.OnPlayData = getApp().globalData.backgroundAudioCtx;
 			if(this.OnPlayData == null || getApp().globalData.isPause == true){
 				this.isPlay = "▶";
@@ -89,25 +65,71 @@
 		},
 
 		methods: {
-			fetchMusicAPI() {
+			loadMusicList() {
 				uni.request({
-					url: 'http://192.168.28.1:5000/API/music',
+					url: `${BASE_URL}/api/music-recommendations`,
 					method: 'GET',
 					success: (res) => {
-						console.log('从 Flask 获取到的数据:', res.data);
-						this.MusicData = res.data;
+						const payload = res && res.data ? res.data : {};
+						const items = Array.isArray(payload.items) ? payload.items : [];
+						if (items.length) {
+							this.MusicData = items;
+						}
 					},
-					fail(err) {
-						console.log('失败', err.data);
-					},
-				})
+					fail: () => {
+						uni.showToast({ title: '音乐加载失败', icon: 'none' });
+					}
+				});
 			},
-			playMusic(res) {
+			async playMusic(track) {
+				const src = track && track.url;
+				if (!src) {
+					uni.showToast({ title: '音频地址为空', icon: 'none' });
+					return;
+				}
+				this.CurrentTrackName = (track && track.name) || '情绪音乐';
+				// #ifdef MP-WEIXIN
+				try {
+					const localSrc = await this.resolvePlayableSource(src);
+					this.playMusicInMiniProgram(localSrc, this.CurrentTrackName);
+				} catch (e) {
+					uni.showToast({ title: '小程序音频加载失败', icon: 'none' });
+				}
+				return;
+				// #endif
+				this.playMusicInCommonPlatform(src);
+			},
+			resolvePlayableSource(src) {
+				return new Promise((resolve, reject) => {
+					if (!src) {
+						reject(new Error('empty src'));
+						return;
+					}
+					if (this.downloadedAudioCache[src]) {
+						resolve(this.downloadedAudioCache[src]);
+						return;
+					}
+					if (!/^https?:\/\//i.test(src)) {
+						resolve(src);
+						return;
+					}
+					uni.downloadFile({
+						url: src,
+						success: (res) => {
+							if (res.statusCode === 200 && res.tempFilePath) {
+								this.downloadedAudioCache[src] = res.tempFilePath;
+								resolve(res.tempFilePath);
+								return;
+							}
+							reject(new Error('download failed'));
+						},
+						fail: () => reject(new Error('download failed'))
+					});
+				});
+			},
+			playMusicInCommonPlatform(src) {
 				const audioContext = uni.createInnerAudioContext();
-				if (this.OnPlayData == null) {
-					console.log("null") //初始值判断
-				} else {
-					uni.removeStorageSync('NowPlay');
+				if (this.OnPlayData != null) {
 					this.OnPlayData.pause();
 					this.OnPlayData.offPlay();
 					this.OnPlayData.offPause();
@@ -117,51 +139,71 @@
 					this.OnPlayData = false;
 					this.isPlay = "▶";
 				}
-				audioContext.src = res;
+				audioContext.src = src;
 				audioContext.volume = 1;
 				audioContext.loop = false; //防止循环播放
+				audioContext.onError(() => {
+					uni.showToast({ title: '音频播放失败', icon: 'none' });
+				});
 				this.OnPlayData = audioContext; //保存实例数据
 				getApp().globalData.backgroundAudioCtx = this.OnPlayData
 				audioContext.play() //开始播放
 				this.isPlay = "⏸";
 				this.ChangeIsPlay = true;
 			},
+			playMusicInMiniProgram(src, title) {
+				if (!this.BackgroundAudio) {
+					this.BackgroundAudio = uni.getBackgroundAudioManager();
+					this.BackgroundAudio.onError((err) => {
+						const msg = err && err.errCode ? `播放失败(${err.errCode})` : '小程序音频播放失败';
+						uni.showToast({ title: msg, icon: 'none' });
+						this.isPlay = "▶";
+						this.ChangeIsPlay = false;
+					});
+					this.BackgroundAudio.onEnded(() => {
+						this.isPlay = "▶";
+						this.ChangeIsPlay = false;
+					});
+				}
+				this.BackgroundAudio.title = title || '情绪音乐';
+				this.BackgroundAudio.singer = 'MoodWeather';
+				this.BackgroundAudio.src = src;
+				this.isPlay = "⏸";
+				this.ChangeIsPlay = true;
+			},
 			PauseButton() {//暂停按键
 				this.ChangeIsPlay = !this.ChangeIsPlay;
+				// #ifdef MP-WEIXIN
+				if (this.BackgroundAudio) {
+					if (this.ChangeIsPlay) {
+						this.isPlay = "⏸";
+						this.BackgroundAudio.play();
+						getApp().globalData.isPause = false;
+					} else {
+						this.isPlay = "▶";
+						this.BackgroundAudio.pause();
+						getApp().globalData.isPause = true;
+					}
+					return;
+				}
+				// #endif
 				if(this.ChangeIsPlay && this.OnPlayData != null){
 					this.isPlay = "⏸";
 					this.OnPlayData.play();
 					getApp().globalData.isPause = false;
 				}else if(this.ChangeIsPlay == false || this.OnPlayData == null){
 					this.isPlay = "▶";
-					this.OnPlayData.pause();
+					if (this.OnPlayData) {
+						this.OnPlayData.pause();
+					}
 					getApp().globalData.isPause = true;
 				}
 			},
-			setting(){
-				uni.navigateTo({
-					url:"/pages/Setting/Setting"
-				})
-			},
-			music(){
-				uni.navigateTo({
-					url:"/pages/Music/Music"
-				})
-			},
-			home(){
-				uni.navigateTo({
-					url:"/pages/Main_Page/Main_Page"
-				})
-			}
 		},
 	};
 </script>
 
 <style scoped lang="css">
-	.mt-11 {
-		margin-top: 20.02rpx;
-	}
-
 	.scrollSize {
 		position: fixed;
 		height: 600rpx;
@@ -281,12 +323,6 @@
 		overflow: hidden;
 	}
 
-	.group_4 {
-		border-radius: 14.56rpx;
-		width: 50.97rpx;
-		height: 29.13rpx;
-	}
-
 	.group_5 {
 		padding: 14.56rpx 0;
 		border-radius: 14.56rpx;
@@ -296,39 +332,7 @@
 		margin: 0 29.13rpx;
 	}
 
-	.section_3 {
-		padding: 14.56rpx 0;
-		background-image: linear-gradient(180.9deg, #575757bf 4.2%, #bdbdbdbf 96.2%);
-		overflow: hidden;
-	}
 
-	.pos_3 {
-		position: absolute;
-		left: 0;
-		right: 0;
-		top: 1529.13rpx;
-	}
-
-	.equal-division {
-		margin: 0 32.77rpx;
-	}
-
-	.equal-division-item {
-		padding: 7.28rpx 0;
-		background-color: #d9d9d980;
-		border-radius: 14.56rpx;
-		width: 109.22rpx;
-		height: 109.22rpx;
-		border-left: solid 1.82rpx #000000;
-		border-right: solid 1.82rpx #000000;
-		border-top: solid 1.82rpx #000000;
-		border-bottom: solid 1.82rpx #000000;
-	}
-
-	.image {
-		width: 87.38rpx;
-		height: 87.38rpx;
-	}
 
 	.PauseAndStart {
 		position: fixed;

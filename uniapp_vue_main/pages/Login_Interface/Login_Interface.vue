@@ -3,20 +3,20 @@
     <view class="shrink-0 section"></view>
     <view class="flex-col section_2 pos">
       <view class="flex-col">
-        <text class="self-start font">邮箱</text>
+        <text class="self-start font">用户名</text>
         <view class="mt-10 flex-col justify-start items-start self-stretch text-wrapper">
-          <input class="font_2 text" placeholder="请输入邮箱" v-model="MyEmail"></input>
+          <input class="font_2 text" placeholder="请输入用户名" v-model.trim="MyEmail" @blur="ValidateUser"></input>
         </view>
       </view>
       <view class="flex-col mt-27">
         <text class="self-start font text_2">密码</text>
         <view class="flex-col self-stretch mt-11">
           <view class="flex-col justify-start items-start self-stretch text-wrapper">
-            <input class="font_2 text text_3" placeholder="请输入密码" v-model="MyPass"></input>
+            <input class="font_2 text text_3" placeholder="请输入密码" password="true" v-model.trim="MyPass" @blur="ValidatePass" @confirm="Submit"></input>
           </view>
-          <text class="self-end err text_4" :style="{visibility:err_visible}" id="err">信息有误！</text>
-          <view @click="Submit" class="flex-col justify-start items-center self-stretch text-wrapper_2">
-            <text class="font text_5">登入</text>
+          <text v-if="errMsg" class="self-end err text_4">{{ errMsg }}</text>
+          <view @click="Submit" class="flex-col justify-start items-center self-stretch text-wrapper_2" :class="{'btn-disabled': loading}">
+            <text class="font text_5">{{ loading ? '登录中...' : '登入' }}</text>
           </view>
         </view>
       </view>
@@ -29,33 +29,75 @@
 </template>
 
 <script>
+  import { apiRequest } from "../../common/request";
+
   export default {
     components: {},
     props: {},
     data() {
       return {
-		  MyEmail:null,
-		  MyPass:null,
-		  err_visible:"hidden"
+      MyEmail: "",
+      MyPass: "",
+      errMsg: "",
+      loading: false
 	  };
     },
     methods: {
-		Submit(){//判断关键字并上传数据
-			var reaserch_at = RegExp(/@/)
-			var reaserch_com = RegExp(/.com/)
-			if(reaserch_at.test(this.MyEmail)==false || reaserch_com.test(this.MyEmail)==false || this.MyPass == null){
-				console.log("err")
-				this.err_visible = "visible"
-				//document.getElementById('err').style.visibility = 'visible'
-			}else{
-				console.log("upload")
-				this.err_visible = "hidden"
-				//document.getElementById('err').style.visibility = 'hidden'
-			}//如果什么都没有不传输数据且报错,如果正常则上传用户数据!!!!比对服务器信息，存在才可以进入页面
-		},
+    ValidateUser() {
+      if (!this.MyEmail || this.MyEmail.length < 3) {
+        this.errMsg = "用户名至少3个字符";
+        return false;
+      }
+      this.errMsg = "";
+      return true;
+    },
+    ValidatePass() {
+      if (!this.MyPass || this.MyPass.length < 6) {
+        this.errMsg = "密码至少6位";
+        return false;
+      }
+      this.errMsg = "";
+      return true;
+    },
+    Submit(){
+      if (this.loading) {
+        return;
+      }
+      const userOk = this.ValidateUser();
+      const passOk = this.ValidatePass();
+      if (!userOk || !passOk) {
+        return;
+      }
+
+      this.loading = true;
+      this.errMsg = "";
+      apiRequest({
+        url: "/api/login",
+        method: "POST",
+        data: { username: this.MyEmail, password: this.MyPass }
+      })
+        .then((res) => {
+          if (res.statusCode === 200 && res.data && res.data.token) {
+            uni.setStorageSync("token", res.data.token);
+            uni.setStorageSync("user", res.data.user || {});
+            uni.reLaunch({ url: "/pages/Main_Page/Main_Page" });
+            return;
+          }
+          const msg = (res.data && (res.data.error || res.data.message)) || "登录失败，请稍后重试";
+          this.errMsg = msg;
+          uni.showToast({ title: msg, icon: "none" });
+        })
+        .catch(() => {
+          this.errMsg = "网络异常，请检查网络";
+          uni.showToast({ title: this.errMsg, icon: "none" });
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
 		GoToZhuCe(){
 			uni.navigateTo({
-				url:'/pages/Main_Page/Main_Page'
+        url:'/pages/Regist_Interface/Regist_Interface'
 			})
 		}
 		
@@ -65,12 +107,14 @@
 
 <style scoped lang="css">
 	.err{
-		visibility: hidden;
 		font-size: 29.13rpx;
 		font-family: Inter;
 		line-height: 26.91rpx;
 		color: #1e1e1e;
 	}
+  .btn-disabled {
+    opacity: 0.7;
+  }
   .mt-27 {
     margin-top: 49.15rpx;
   }

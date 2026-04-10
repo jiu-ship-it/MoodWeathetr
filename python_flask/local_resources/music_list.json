@@ -1,0 +1,38 @@
+[
+  {
+    "emotion_tag": "1",
+    "name": "你从未离去",
+    "author": "白挺",
+    "url": "audio/白挺 - 你从未离去.mp3",
+    "cover": "images/OIP-C.webp",
+    "duration": 0,
+    "is_active": true
+  },
+  {
+    "emotion_tag": "2",
+    "name": "大鱼 (唱片版)",
+    "author": "周深",
+    "url": "audio/周深 - 大鱼 (唱片版).mp3",
+    "cover": "images/way.jpeg",
+    "duration": 0,
+    "is_active": true
+  },
+  {
+    "emotion_tag": "3",
+    "name": "我的未来式",
+    "author": "郭采洁",
+    "url": "audio/郭采洁 - 我的未来式.mp3",
+    "cover": "images/way.jpeg",
+    "duration": 0,
+    "is_active": true
+  },
+  {
+    "emotion_tag": "3",
+    "name": "Sold Out",
+    "author": "XDNevelOfficial",
+    "url": "audio/XDNevelOfficial - Sold Out.mp3",
+    "cover": "images/OIP-C.webp",
+    "duration": 0,
+    "is_active": true
+  }
+]

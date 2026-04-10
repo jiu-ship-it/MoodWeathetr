@@ -5,34 +5,34 @@
       <view class="flex-col">
         <view class="flex-row justify-between items-center group">
           <text class="font text">昵称</text>
-          <text class="font_2 NameRed" id="Nerr">昵称不可用！</text>
+          <text v-if="errors.name" class="font_2 NameRed">{{ errors.name }}</text>
         </view>
         <view class="flex-col justify-start items-start text-wrapper">
-          <input class="font_3 text_2 text_3" placeholder='请输入昵称' v-model="Name"></input>
+          <input class="font_3 text_2 text_3" placeholder='请输入昵称' v-model.trim="Name" @blur="ValidateName"></input>
         </view>
       </view>
       <view class="mt-26 flex-col">
         <view class="flex-row justify-between group_2">
           <text class="font text_4">邮箱</text>
-          <text class="font_2 text_5 EmailRed" id="Eerr">邮箱不可用！</text>
+          <text v-if="errors.email" class="font_2 text_5 EmailRed">{{ errors.email }}</text>
         </view>
         <view class="flex-col justify-start items-start text-wrapper">
-          <input class="font_3 text_2 text_6" placeholder="请输入邮箱" v-model="Email"></input>
+          <input class="font_3 text_2 text_6" placeholder="请输入邮箱" v-model.trim="Email" @blur="ValidateEmail"></input>
         </view>
       </view>
       <view class="mt-26 flex-col">
 		<view class="flex-row justify-between group_2">
 			<text class="self-start font text_7">密码</text>
-			<text class="font_2 text_pass PassRed" id="Perr">密码不可用！</text>
+			<text v-if="errors.password" class="font_2 text_pass PassRed">{{ errors.password }}</text>
 		</view>
         <view class="mt-10 flex-col justify-start items-start self-stretch text-wrapper">
-          <input class="font_3 text_2" password="true" placeholder="请输入密码" v-model="Password"></input>
+          <input class="font_3 text_2" password="true" placeholder="请输入密码" v-model.trim="Password" @blur="ValidatePassword" @confirm="Sign"></input>
         </view>
       </view>
       <view class="mt-26 flex-row">
         <view class="flex-col justify-start items-center text-wrapper_2" @click="Back"><text class="font text_8">返回</text></view>
-        <view class="flex-col justify-start items-center text-wrapper_3 ml-15" @click="Sign">
-          <text class="font text_9">注册</text>
+        <view class="flex-col justify-start items-center text-wrapper_3 ml-15" @click="Sign" :class="{'btn-disabled': loading}">
+          <text class="font text_9">{{ loading ? '注册中...' : '注册' }}</text>
         </view>
       </view>
     </view>
@@ -40,15 +40,22 @@
 </template>
 
 <script>
+  import { apiRequest } from "../../common/request";
+
   export default {
     components: {},
     props: {},
     data() {
       return {
-		  Name:null,
-		  Email:null,
-		  Password:null,
-		  IsUpload:true,
+      Name: "",
+      Email: "",
+      Password: "",
+      errors: {
+      name: "",
+      email: "",
+      password: ""
+      },
+      loading: false
 	  };
     },
 
@@ -56,45 +63,65 @@
 		Back(){
 			uni.navigateBack()
 		},
-		Sign(){//比对name，email等数据，防止出现用户冲突等情况，同时确认格式
-			uni.request({
-				url:"http://192.168.28.1:5000/API/register",
-				method:'POST',
-				header:{'Contnt-type':'application/json'},
-				data:{id:this.Email,name:this.Name,password:this.Password},
-				success: (res) => {
-					console.log(res.data)
-				},
-				fail: (err) => {
-					console.log("err!!!")
-				}
-			})
-			/* var reaserch_at = RegExp(/@/)
-			var reaserch_com = RegExp(/.com/)
-			if(reaserch_at.test(this.Email)==false || reaserch_com.test(this.Email)==false){
-				console.log("Eerr")
-				document.getElementById("Eerr").style.visibility = 'visible'
-			}else{
-				document.getElementById("Eerr").style.visibility = 'hidden'
-			}
-			if(this.Password == null){
-				console.log("Perr")
-				document.getElementById("Perr").style.visibility = 'visible'
-			}else{
-				document.getElementById("Perr").style.visibility = 'hidden'
-			}
-			if(this.Name == null){
-				console.log("Nerr")
-				document.getElementById("Nerr").style.visibility = 'visible'
-			}else{
-				document.getElementById("Nerr").style.visibility = 'hidden'
-			}
-			if(this.IsUpload == true){
-				 */
-				//uni.navigateTo({
-					//url:"/pages/zhujiemian_2/zhujiemian_2"
-				//})
-			},
+    ValidateName() {
+      if (!this.Name || this.Name.length < 3) {
+        this.errors.name = "昵称至少3个字符";
+        return false;
+      }
+      this.errors.name = "";
+      return true;
+    },
+    ValidateEmail() {
+      const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+      if (!this.Email || !emailRegex.test(this.Email)) {
+        this.errors.email = "邮箱格式不正确";
+        return false;
+      }
+      this.errors.email = "";
+      return true;
+    },
+    ValidatePassword() {
+      if (!this.Password || this.Password.length < 6) {
+        this.errors.password = "密码至少6位";
+        return false;
+      }
+      this.errors.password = "";
+      return true;
+    },
+    Sign(){
+      if (this.loading) {
+        return;
+      }
+      const nameOk = this.ValidateName();
+      const emailOk = this.ValidateEmail();
+      const passOk = this.ValidatePassword();
+      if (!nameOk || !emailOk || !passOk) {
+        return;
+      }
+
+      this.loading = true;
+      apiRequest({
+        url: "/api/register",
+        method: "POST",
+        data: { username: this.Name, email: this.Email, password: this.Password }
+      })
+        .then((res) => {
+          if (res.statusCode === 201 && res.data && res.data.token) {
+            uni.setStorageSync("token", res.data.token);
+            uni.setStorageSync("user", res.data.user || {});
+            uni.reLaunch({ url: "/pages/Main_Page/Main_Page" });
+            return;
+          }
+          const msg = (res.data && (res.data.error || res.data.message)) || "注册失败，请稍后重试";
+          uni.showToast({ title: msg, icon: "none" });
+        })
+        .catch(() => {
+          uni.showToast({ title: "网络异常，请检查网络", icon: "none" });
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
 		}
   };
 </script>
@@ -239,5 +266,8 @@
   .text_pass{
 	  line-height: 27.05rpx;
 	  float: right;
+  }
+  .btn-disabled {
+    opacity: 0.7;
   }
 </style>

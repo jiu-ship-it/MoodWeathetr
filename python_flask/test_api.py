@@ -66,11 +66,11 @@ if __name__ == "__main__":
     test_health()
     
     # 测试注册
-    register_response = test_register("testuser", "test@example.com", "password123")
+    register_response = test_register("testuser_2", "test_2@example.com", "password123")
     
     if register_response.status_code == 201:
         # 测试登录
-        login_response = test_login("testuser", "password123")
+        login_response = test_login("testuser_2", "password123")
         
         if login_response.status_code == 200:
             token = login_response.json().get('token')
