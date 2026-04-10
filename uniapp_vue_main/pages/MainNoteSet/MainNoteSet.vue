@@ -155,7 +155,12 @@
 						} else if (res.statusCode === 501) {
 							uni.showToast({ title: '模型服务未配置', icon: 'none' });
 						} else {
-							uni.showToast({ title: '分析失败', icon: 'none' });
+							const data = res && res.data ? res.data : {};
+							const detailText = data.detail
+								? (typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail))
+								: '';
+							const msg = detailText ? `${data.error || '分析失败'}：${detailText}` : (data.error || data.message || '分析失败');
+							uni.showToast({ title: msg, icon: 'none' });
 						}
 					},
 					fail: () => {

@@ -9,6 +9,7 @@
 				<view class="summary-head">
 					<text class="note-title">{{ title || '未命名笔记' }}</text>
 					<text class="analysis-time" v-if="analyzedAt">分析时间：{{ formattedAnalyzedAt }}</text>
+					<text class="analysis-time" v-if="modelStatusText">模型状态：{{ modelStatusText }}</text>
 					<text class="note-content" v-if="noteContent">{{ noteContent }}</text>
 				</view>
 				<view class="summary-main" :class="summaryEmotion.className" v-if="hasAnalysis">
@@ -157,7 +158,9 @@
 				expandedPushIndex: 0,
 				resourceImageText: [],
 				resourceVideos: [],
-				resourceMusic: []
+				resourceMusic: [],
+				modelReachable: null,
+				modelStatusText: ''
 			};
 		},
 		computed: {
@@ -288,10 +291,40 @@
 			if (options && options.id) {
 				this.noteId = options.id;
 				this.simpleMode = String(options.simple || '') === '1';
+				this.fetchModelStatus();
 				this.fetchNoteDetail();
 			}
 		},
 		methods: {
+			fetchModelStatus() {
+				uni.request({
+					url: `${BASE_URL}/api/model-status`,
+					method: 'GET',
+					success: (res) => {
+						if (res.statusCode === 200 && res.data) {
+							this.modelReachable = !!res.data.reachable;
+							this.modelStatusText = res.data.message || (this.modelReachable ? '可用' : '不可用');
+						}
+					}
+				});
+			},
+			extractAnalyzeError(res) {
+				if (!res || !res.data) {
+					return '分析失败';
+				}
+				const payload = res.data;
+				if (payload.detail) {
+					if (typeof payload.detail === 'string') {
+						return `${payload.error || '分析失败'}：${payload.detail}`;
+					}
+					try {
+						return `${payload.error || '分析失败'}：${JSON.stringify(payload.detail)}`;
+					} catch (e) {
+						return payload.error || '分析失败';
+					}
+				}
+				return payload.error || payload.message || '分析失败';
+			},
 			emotionMetaByIndex(idx) {
 				const metas = [
 					{ label: '低落预警', className: 'emotion-3', color: '#8b2f4f' },
@@ -401,6 +434,12 @@
 				if (!this.noteId || this.isLoading) {
 					return;
 				}
+				if (this.modelReachable === false) {
+					const tip = this.modelStatusText || '模型服务不可用，请稍后重试';
+					this.errorText = tip;
+					uni.showToast({ title: tip, icon: 'none' });
+					return;
+				}
 				this.errorText = '';
 				this.isLoading = true;
 				const token = uni.getStorageSync('token');
@@ -414,9 +453,10 @@
 							this.analyzedAt = res.data.analyzed_at || '';
 							this.applyAnalysis(res.data.analysis);
 							uni.showToast({ title: '分析完成', icon: 'success' });
+							this.fetchModelStatus();
 							return;
 						}
-						const msg = (res.data && (res.data.error || res.data.message)) || '分析失败';
+						const msg = this.extractAnalyzeError(res);
 						this.errorText = msg;
 						uni.showToast({ title: msg, icon: 'none' });
 					},

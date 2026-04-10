@@ -264,6 +264,39 @@ def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat() + 'Z'}), 200
 
 
+@app.route('/api/model-status', methods=['GET'])
+def model_status():
+    """模型服务状态接口"""
+    model_url = (app.config.get('MODEL_ANALYZE_URL') or '').strip()
+    if not model_url:
+        return jsonify({
+            'configured': False,
+            'reachable': False,
+            'message': 'MODEL_ANALYZE_URL 未配置'
+        }), 200
+
+    reachable = False
+    status_code = None
+    message = '模型服务不可达'
+
+    try:
+        # 模型服务通常是 POST 接口，这里使用 GET 仅用于连通性探测。
+        resp = requests.get(model_url, timeout=3)
+        status_code = resp.status_code
+        if 200 <= resp.status_code < 500:
+            reachable = True
+            message = '模型服务可达'
+    except requests.RequestException as exc:
+        message = str(exc)
+
+    return jsonify({
+        'configured': True,
+        'reachable': reachable,
+        'status_code': status_code,
+        'message': message
+    }), 200
+
+
 def ensure_wav_for_model(audio_path):
     if not audio_path:
         return None
