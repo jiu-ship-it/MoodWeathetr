@@ -59,7 +59,8 @@ class Note(db.Model):
     user = db.relationship('User', backref='notes')
 
 # 创建Flask应用
-app = Flask(__name__)
+# 关闭 Flask 默认 /static 路由，避免与前端 H5 静态资源路径冲突。
+app = Flask(__name__, static_folder=None)
 
 # 配置
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-this')
