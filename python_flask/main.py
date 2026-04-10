@@ -79,10 +79,18 @@ app.config['MODEL_ANALYZE_URL'] = os.environ.get('MODEL_ANALYZE_URL', model_serv
 LOCAL_RESOURCE_ROOT = os.path.join(app.root_path, 'local_resources')
 LOCAL_EMOTION_FEED_FILE = os.path.join(LOCAL_RESOURCE_ROOT, 'emotion_feeds.json')
 LOCAL_MUSIC_FILE = os.path.join(LOCAL_RESOURCE_ROOT, 'music_list.json')
+WEB_DIST_ROOT = os.path.join(app.root_path, 'web_dist')
+WEB_INDEX_FILE = os.path.join(WEB_DIST_ROOT, 'index.html')
 
 os.makedirs(LOCAL_RESOURCE_ROOT, exist_ok=True)
 os.makedirs(os.path.join(LOCAL_RESOURCE_ROOT, 'audio'), exist_ok=True)
 os.makedirs(os.path.join(LOCAL_RESOURCE_ROOT, 'images'), exist_ok=True)
+
+
+def serve_h5_index_or_backend_message():
+    if os.path.exists(WEB_INDEX_FILE):
+        return send_from_directory(WEB_DIST_ROOT, 'index.html')
+    return jsonify({"message": "WarmLabel backend is running"})
 
 
 def parse_allowed_origins():
@@ -136,7 +144,7 @@ with app.app_context():
 @app.route("/")
 def index():
     """首页"""
-    return jsonify({"message": "WarmLabel backend is running"})
+    return serve_h5_index_or_backend_message()
 
 @app.route("/api/register", methods=["POST"])
 def register():
@@ -726,6 +734,18 @@ def delete_note(note_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/<path:path>', methods=['GET'])
+def serve_h5_assets(path):
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+
+    target = os.path.join(WEB_DIST_ROOT, path)
+    if os.path.isfile(target):
+        return send_from_directory(WEB_DIST_ROOT, path)
+
+    return serve_h5_index_or_backend_message()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
