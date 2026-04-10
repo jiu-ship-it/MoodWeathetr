@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 import json
 import subprocess
 from urllib.parse import quote
+import tempfile
+import io
 
 # 初始化Flask应用
 db = SQLAlchemy()
@@ -50,6 +52,9 @@ class Note(db.Model):
     content = db.Column(db.Text)
     emotion = db.Column(db.Integer)
     audio_path = db.Column(db.String(500))
+    audio_data = db.Column(db.LargeBinary)
+    audio_mime = db.Column(db.String(120))
+    audio_filename = db.Column(db.String(255))
     audio_duration = db.Column(db.Integer)
     sentiment_score = db.Column(db.Float)
     analysis_result = db.Column(db.Text)
@@ -119,7 +124,8 @@ with app.app_context():
     db.create_all()
 
     def ensure_note_columns():
-        if db.engine.dialect.name != 'sqlite':
+        dialect = db.engine.dialect.name
+        if dialect not in ('sqlite', 'postgresql'):
             return
 
         inspector = inspect(db.engine)
@@ -127,13 +133,23 @@ with app.app_context():
             return
 
         columns = {col['name'] for col in inspector.get_columns('note')}
+
+        datetime_type = 'DATETIME' if dialect == 'sqlite' else 'TIMESTAMP'
+        binary_type = 'BLOB' if dialect == 'sqlite' else 'BYTEA'
+
         pending = []
         if 'analysis_result' not in columns:
             pending.append("ALTER TABLE note ADD COLUMN analysis_result TEXT")
         if 'analyzed_at' not in columns:
-            pending.append("ALTER TABLE note ADD COLUMN analyzed_at DATETIME")
+            pending.append(f"ALTER TABLE note ADD COLUMN analyzed_at {datetime_type}")
         if 'audio_duration' not in columns:
             pending.append("ALTER TABLE note ADD COLUMN audio_duration INTEGER")
+        if 'audio_data' not in columns:
+            pending.append(f"ALTER TABLE note ADD COLUMN audio_data {binary_type}")
+        if 'audio_mime' not in columns:
+            pending.append("ALTER TABLE note ADD COLUMN audio_mime VARCHAR(120)")
+        if 'audio_filename' not in columns:
+            pending.append("ALTER TABLE note ADD COLUMN audio_filename VARCHAR(255)")
 
         for statement in pending:
             db.session.execute(text(statement))
@@ -346,6 +362,43 @@ def format_datetime_z(value):
     return value.isoformat() + 'Z'
 
 
+def create_temp_audio_file(audio_bytes, filename_hint='audio.wav'):
+    if not audio_bytes:
+        return None
+    ext = os.path.splitext(filename_hint or '')[1].lower() or '.wav'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+        tmp.write(audio_bytes)
+        return tmp.name
+
+
+def resolve_note_audio_for_model(note):
+    if note.audio_data:
+        filename = note.audio_filename or 'audio.wav'
+        temp_path = create_temp_audio_file(note.audio_data, filename)
+        return temp_path, True
+    if note.audio_path and os.path.exists(note.audio_path):
+        return note.audio_path, False
+    return None, False
+
+
+def cleanup_temp_audio_files(*paths):
+    for path in paths:
+        if not path:
+            continue
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+        except OSError:
+            pass
+
+
+def note_audio_url(note):
+    has_audio = bool(note.audio_data) or bool(note.audio_path)
+    if not has_audio:
+        return None
+    return f"{request.host_url.rstrip('/')}/api/notes/{note.id}/audio"
+
+
 def load_json_array(file_path, default_items):
     if not os.path.exists(file_path):
         return default_items
@@ -527,16 +580,23 @@ def create_note():
 
         audio_file = request.files.get('audio')
         audio_path = None
+        audio_bytes = None
+        audio_filename = None
+        audio_mime = None
+        temp_audio_path = None
         if audio_file:
             original_name = secure_filename(audio_file.filename or '')
             ext = os.path.splitext(original_name)[1].lower() or '.wav'
-            filename = f"{user_id}_{int(time.time())}{ext}"
-            audio_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            audio_file.save(audio_path)
+            audio_filename = f"{user_id}_{int(time.time())}{ext}"
+            audio_bytes = audio_file.read()
+            if audio_bytes:
+                audio_mime = (audio_file.mimetype or 'application/octet-stream')[:120]
+                temp_audio_path = create_temp_audio_file(audio_bytes, audio_filename)
+                audio_path = audio_filename
 
         sentiment_score = None
-        if content and audio_path:
-            model_audio_path = ensure_wav_for_model(audio_path)
+        if content and temp_audio_path:
+            model_audio_path = ensure_wav_for_model(temp_audio_path)
             try:
                 with open(model_audio_path, 'rb') as audio_stream:
                     files = {'audio': audio_stream}
@@ -546,6 +606,8 @@ def create_note():
                     sentiment_score = response.json().get('prediction')
             except requests.RequestException:
                 sentiment_score = None
+            finally:
+                cleanup_temp_audio_files(model_audio_path if model_audio_path != temp_audio_path else None, temp_audio_path)
 
         note = Note(
             user_id=user_id,
@@ -553,6 +615,9 @@ def create_note():
             content=content,
             emotion=emotion_value,
             audio_path=audio_path,
+            audio_data=audio_bytes,
+            audio_mime=audio_mime,
+            audio_filename=audio_filename,
             audio_duration=audio_duration,
             sentiment_score=sentiment_score
         )
@@ -605,7 +670,7 @@ def get_note(note_id):
         'title': note.title,
         'content': note.content,
         'emotion': note.emotion,
-        'audio_path': note.audio_path,
+        'audio_path': note_audio_url(note),
         'audio_duration': note.audio_duration,
         'sentiment_score': note.sentiment_score,
         'analysis_result': note.analysis_result,
@@ -626,14 +691,24 @@ def analyze_note(note_id):
         if not app.config['MODEL_ANALYZE_URL']:
             return jsonify({'error': '模型服务未配置'}), 501
 
-        if not note.content or not note.audio_path:
+        if not note.content or (not note.audio_data and not note.audio_path):
             return jsonify({'error': '需要文本与录音才能分析'}), 400
 
-        model_audio_path = ensure_wav_for_model(note.audio_path)
-        with open(model_audio_path, 'rb') as audio_stream:
-            files = {'audio': audio_stream}
-            data = {'text': note.content}
-            response = requests.post(app.config['MODEL_ANALYZE_URL'], data=data, files=files, timeout=20)
+        original_audio_path, should_cleanup = resolve_note_audio_for_model(note)
+        if not original_audio_path:
+            return jsonify({'error': '录音不存在'}), 404
+
+        model_audio_path = ensure_wav_for_model(original_audio_path)
+        try:
+            with open(model_audio_path, 'rb') as audio_stream:
+                files = {'audio': audio_stream}
+                data = {'text': note.content}
+                response = requests.post(app.config['MODEL_ANALYZE_URL'], data=data, files=files, timeout=20)
+        finally:
+            cleanup_temp_audio_files(
+                model_audio_path if model_audio_path != original_audio_path else None,
+                original_audio_path if should_cleanup else None
+            )
 
         if response.status_code != 200:
             detail = None
@@ -672,6 +747,14 @@ def get_note_audio(note_id):
     if note.user_id != int(get_jwt_identity()):
         return jsonify({'error': '无权访问'}), 403
 
+    if note.audio_data:
+        return send_file(
+            io.BytesIO(note.audio_data),
+            mimetype=note.audio_mime or 'application/octet-stream',
+            as_attachment=False,
+            download_name=note.audio_filename or f'note_{note.id}.wav'
+        )
+
     if not note.audio_path or not os.path.exists(note.audio_path):
         return jsonify({'error': '录音不存在'}), 404
 
@@ -703,8 +786,7 @@ def update_note(note_id):
             original_name = secure_filename(audio_file.filename or '')
             ext = os.path.splitext(original_name)[1].lower() or '.wav'
             filename = f"{note.user_id}_{int(time.time())}{ext}"
-            new_audio_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            audio_file.save(new_audio_path)
+            uploaded_bytes = audio_file.read()
 
             if note.audio_path and os.path.exists(note.audio_path):
                 try:
@@ -712,20 +794,33 @@ def update_note(note_id):
                 except OSError:
                     pass
 
-            note.audio_path = new_audio_path
+            note.audio_path = filename if uploaded_bytes else note.audio_path
+            note.audio_data = uploaded_bytes if uploaded_bytes else note.audio_data
+            note.audio_mime = (audio_file.mimetype or 'application/octet-stream')[:120] if uploaded_bytes else note.audio_mime
+            note.audio_filename = filename if uploaded_bytes else note.audio_filename
 
         sentiment_score = note.sentiment_score
-        if content and note.audio_path:
-            model_audio_path = ensure_wav_for_model(note.audio_path)
+        if content and (note.audio_data or note.audio_path):
+            source_audio_path, should_cleanup = resolve_note_audio_for_model(note)
+            if source_audio_path:
+                model_audio_path = ensure_wav_for_model(source_audio_path)
+            else:
+                model_audio_path = None
             try:
-                with open(model_audio_path, 'rb') as audio_stream:
-                    files = {'audio': audio_stream}
-                    data = {'text': content}
-                    response = requests.post(app.config['MODEL_SERVICE_URL'], data=data, files=files, timeout=10)
-                if response.status_code == 200:
-                    sentiment_score = response.json().get('prediction')
+                if model_audio_path:
+                    with open(model_audio_path, 'rb') as audio_stream:
+                        files = {'audio': audio_stream}
+                        data = {'text': content}
+                        response = requests.post(app.config['MODEL_SERVICE_URL'], data=data, files=files, timeout=10)
+                    if response.status_code == 200:
+                        sentiment_score = response.json().get('prediction')
             except requests.RequestException:
                 sentiment_score = note.sentiment_score
+            finally:
+                cleanup_temp_audio_files(
+                    model_audio_path if model_audio_path and model_audio_path != source_audio_path else None,
+                    source_audio_path if 'should_cleanup' in locals() and should_cleanup else None
+                )
 
         note.title = title
         note.content = content
