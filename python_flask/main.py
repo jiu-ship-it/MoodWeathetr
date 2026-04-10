@@ -284,7 +284,7 @@ def health_check():
 def model_status():
     """模型服务状态接口"""
     model_url = (app.config.get('MODEL_ANALYZE_URL') or '').strip()
-    if not model_url:
+    if is_placeholder_model_url(model_url):
         return jsonify({
             'configured': False,
             'reachable': False,
@@ -441,6 +441,43 @@ def normalize_emotion_tag(raw_value):
         'happy': '3'
     }
     return map_table.get(text, '')
+
+
+def is_placeholder_model_url(url):
+    text = (url or '').strip().lower()
+    return (not text) or ('your-model-service.example.com' in text)
+
+
+def build_local_fallback_analysis(text):
+    content = str(text or '').strip().lower()
+    if not content:
+        probs = [0.2, 0.6, 0.2]
+        pred = 2
+    else:
+        negative_words = ['难过', '痛苦', '焦虑', '崩溃', 'sad', 'depress', 'tired', '烦', '累']
+        positive_words = ['开心', '高兴', '满足', '放松', 'happy', 'great', 'good', '轻松', '顺利']
+        neg_score = sum(1 for w in negative_words if w in content)
+        pos_score = sum(1 for w in positive_words if w in content)
+
+        if neg_score > pos_score:
+            probs = [0.72, 0.20, 0.08]
+            pred = 1
+        elif pos_score > neg_score:
+            probs = [0.10, 0.22, 0.68]
+            pred = 3
+        else:
+            probs = [0.16, 0.68, 0.16]
+            pred = 2
+
+    return {
+        'prediction': pred,
+        'probabilities': {
+            'M': probs,
+            'T': probs,
+            'A': probs
+        },
+        'source': 'local-fallback'
+    }
 
 
 @app.route('/api/local-resources/<path:resource_path>', methods=['GET'])
@@ -688,8 +725,18 @@ def analyze_note(note_id):
         if note.user_id != int(get_jwt_identity()):
             return jsonify({'error': '无权访问'}), 403
 
-        if not app.config['MODEL_ANALYZE_URL']:
-            return jsonify({'error': '模型服务未配置'}), 501
+        model_url = (app.config.get('MODEL_ANALYZE_URL') or '').strip()
+        if is_placeholder_model_url(model_url):
+            result = build_local_fallback_analysis(note.content)
+            note.analysis_result = json.dumps(result)
+            note.analyzed_at = datetime.utcnow()
+            db.session.commit()
+            return jsonify({
+                'message': '分析完成（兜底模式）',
+                'note_id': note.id,
+                'analysis': result,
+                'analyzed_at': note.analyzed_at.isoformat() + 'Z'
+            }), 200
 
         if not note.content or (not note.audio_data and not note.audio_path):
             return jsonify({'error': '需要文本与录音才能分析'}), 400
@@ -703,7 +750,7 @@ def analyze_note(note_id):
             with open(model_audio_path, 'rb') as audio_stream:
                 files = {'audio': audio_stream}
                 data = {'text': note.content}
-                response = requests.post(app.config['MODEL_ANALYZE_URL'], data=data, files=files, timeout=20)
+                response = requests.post(model_url, data=data, files=files, timeout=20)
         finally:
             cleanup_temp_audio_files(
                 model_audio_path if model_audio_path != original_audio_path else None,
@@ -733,8 +780,23 @@ def analyze_note(note_id):
             'analysis': result,
             'analyzed_at': note.analyzed_at.isoformat() + 'Z'
         }), 200
+    except requests.RequestException as e:
+        app.logger.exception('analyze_note model request failed')
+        if 'note' in locals() and note:
+            result = build_local_fallback_analysis(note.content)
+            note.analysis_result = json.dumps(result)
+            note.analyzed_at = datetime.utcnow()
+            db.session.commit()
+            return jsonify({
+                'message': '分析完成（兜底模式）',
+                'note_id': note.id,
+                'analysis': result,
+                'analyzed_at': note.analyzed_at.isoformat() + 'Z',
+                'fallback_reason': str(e)
+            }), 200
+        return jsonify({'error': str(e)}), 500
     except Exception as e:
-        app.logger.exception('delete_note failed')
+        app.logger.exception('analyze_note failed')
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
