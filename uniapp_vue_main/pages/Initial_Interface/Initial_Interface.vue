@@ -25,9 +25,7 @@
   .page {
     background-color: #ffffff;
     overflow: hidden;
-    background-image: url(https://bing.img.run/m.php);
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+    background-image: linear-gradient(160deg, #f6fbff 0%, #d9ecff 45%, #b8daff 100%);
     width: 100%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -35,9 +33,7 @@
   }
   .section {
     overflow: hidden;
-    background-image: url(https://bing.img.run/m.php);
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
+    background: transparent;
     width: 750rpx;
     height: 1669.3rpx;
   }

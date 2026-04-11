@@ -81,14 +81,14 @@
 
 				<view class="resource-block">
 					<text class="resource-title">图文资源</text>
-					<view class="resource-list">
+					<view class="resource-grid">
 						<view class="resource-card" v-for="(item, idx) in resourceImageText" :key="`img-${idx}`">
+							<text class="resource-badge">图文</text>
 							<image v-if="item.cover" class="resource-cover" :src="item.cover" mode="aspectFill" />
 							<text class="resource-name">{{ item.title }}</text>
 							<text class="resource-desc">{{ item.desc }}</text>
-							<text class="resource-detail" v-if="item.expanded">{{ item.detail || item.desc || '暂无详情' }}</text>
-							<view class="resource-action" @click="toggleResourceArticle(idx)">
-								<text class="resource-action-text">{{ item.expanded ? '收起内容' : '展开全文' }}</text>
+							<view class="resource-action" @click="openResourceDetail(item)">
+								<text class="resource-action-text">查看详情</text>
 							</view>
 						</view>
 					</view>
@@ -97,29 +97,36 @@
 
 				<view class="resource-block">
 					<text class="resource-title">视频资源</text>
-					<view class="resource-list">
-						<view class="resource-card" v-for="(item, idx) in resourceVideos" :key="`video-${idx}`">
+					<scroll-view class="resource-scroll" scroll-x enable-flex show-scrollbar="false">
+						<view class="resource-row">
+							<view class="resource-card h-card" v-for="(item, idx) in resourceVideos" :key="`video-${idx}`">
+							<text class="resource-badge">视频</text>
+							<image v-if="item.cover" class="resource-video-cover" :src="item.cover" mode="aspectFill" />
 							<text class="resource-name">{{ item.title }}</text>
 							<text class="resource-desc">{{ item.desc }}</text>
 							<view class="resource-action primary" @click="openVideoResource(item)">
 								<text class="resource-action-text light">直接播放视频</text>
 							</view>
 						</view>
-					</view>
+						</view>
+					</scroll-view>
 					<text class="resource-empty" v-if="!resourceVideos.length">暂无视频资源</text>
 				</view>
 
 				<view class="resource-block">
 					<text class="resource-title">音乐资源</text>
-					<view class="resource-list">
-						<view class="resource-card" v-for="(item, idx) in resourceMusic" :key="`music-${idx}`">
+					<scroll-view class="resource-scroll" scroll-x enable-flex show-scrollbar="false">
+						<view class="resource-row">
+							<view class="resource-card h-card" v-for="(item, idx) in resourceMusic" :key="`music-${idx}`">
+							<text class="resource-badge">音乐</text>
 							<text class="resource-name">{{ item.name }}</text>
 							<text class="resource-desc">创作者：{{ item.author }}</text>
 							<view class="resource-action" @click="openMusicPage">
 								<text class="resource-action-text">去音乐页播放</text>
 							</view>
 						</view>
-					</view>
+						</view>
+					</scroll-view>
 					<text class="resource-empty" v-if="!resourceMusic.length">暂无音乐资源</text>
 				</view>
 			</view>
@@ -494,38 +501,45 @@
 			},
 			fetchEmotionResources(emotionTag) {
 				uni.request({
-					url: `${BASE_URL}/api/emotion-feeds`,
+					url: `${BASE_URL}/api/resource-bundles`,
 					method: 'GET',
 					data: { emotion: emotionTag || '' },
 					success: (res) => {
-						const payload = res && res.data ? res.data : {};
-						const imageText = Array.isArray(payload.imageText) ? payload.imageText : [];
-						const videos = Array.isArray(payload.videos)
-							? payload.videos.filter((item) => !!(item && item.url))
-							: [];
-						this.resourceImageText = imageText.map((item) => ({ ...item, expanded: false }));
+						const body = res && res.data ? res.data : {};
+						const payload = body.data && body.code === 0 ? body.data : body;
+						const recommended = payload && payload.recommended_group ? payload.recommended_group : null;
+						if (!recommended) {
+							this.resourceImageText = [];
+							this.resourceVideos = [];
+							this.resourceMusic = [];
+							return;
+						}
+						const imageText = Array.isArray(recommended.imageText) ? recommended.imageText : [];
+						const videos = Array.isArray(recommended.videos) ? recommended.videos.filter((item) => !!(item && item.url)) : [];
+						const music = Array.isArray(recommended.music) ? recommended.music : [];
+						this.resourceImageText = imageText;
 						this.resourceVideos = videos;
-					}
-				});
-
-				uni.request({
-					url: `${BASE_URL}/api/music-recommendations`,
-					method: 'GET',
-					data: { emotion: emotionTag || '' },
-					success: (res) => {
-						const payload = res && res.data ? res.data : {};
-						const items = Array.isArray(payload.items) ? payload.items : [];
-						this.resourceMusic = items;
+						this.resourceMusic = music;
+					},
+					fail: () => {
+						this.resourceImageText = [];
+						this.resourceVideos = [];
+						this.resourceMusic = [];
 					}
 				});
 			},
-			toggleResourceArticle(index) {
-				this.resourceImageText = this.resourceImageText.map((item, idx) => {
-					if (idx === index) {
-						return { ...item, expanded: !item.expanded };
-					}
-					return item;
+			openResourceDetail(item) {
+				if (!item) {
+					return;
+				}
+				uni.setStorageSync('resource_detail_payload', {
+					title: item.title || '资源详情',
+					desc: item.desc || '',
+					detail: item.detail || item.desc || '',
+					cover: item.cover || '',
+					badge: '图文'
 				});
+				uni.navigateTo({ url: '/pages/ResourceDetail/ResourceDetail' });
 			},
 			openVideoResource(item) {
 				const rawUrl = String((item && item.url) || '');
@@ -872,22 +886,51 @@
 		margin-bottom: 10rpx;
 	}
 
-	.resource-list {
+	.resource-grid {
+		display: grid;
+		grid-template-columns: repeat(1, minmax(0, 1fr));
+		gap: 10rpx;
+	}
+
+	.resource-scroll {
+		margin-top: 8rpx;
+	}
+
+	.resource-row {
 		display: flex;
-		flex-direction: column;
 		gap: 10rpx;
 	}
 
 	.resource-card {
+		position: relative;
 		background: #ffffff;
 		border: 1rpx solid #d9e6f2;
 		border-radius: 12rpx;
 		padding: 14rpx;
 	}
 
+	.resource-badge {
+		position: absolute;
+		top: 10rpx;
+		right: 10rpx;
+		background: #2b4e48;
+		color: #ffffff;
+		font-size: 18rpx;
+		padding: 4rpx 10rpx;
+		border-radius: 999rpx;
+	}
+
 	.resource-cover {
 		width: 100%;
 		height: 200rpx;
+		border-radius: 10rpx;
+		margin-bottom: 10rpx;
+		background: #e8f1f9;
+	}
+
+	.resource-video-cover {
+		width: 100%;
+		height: 170rpx;
 		border-radius: 10rpx;
 		margin-bottom: 10rpx;
 		background: #e8f1f9;
@@ -908,16 +951,10 @@
 		color: #4a667f;
 	}
 
-	.resource-detail {
-		display: block;
-		margin-top: 8rpx;
-		padding: 10rpx;
-		border-radius: 10rpx;
-		background: #eef5fb;
-		font-size: 23rpx;
-		line-height: 34rpx;
-		color: #315066;
+	.h-card {
+		width: 380rpx;
 	}
+
 
 	.resource-action {
 		display: inline-flex;
@@ -944,6 +981,12 @@
 		display: block;
 		font-size: 23rpx;
 		color: #6a8093;
+	}
+
+	@media (max-width: 420px) {
+		.resource-grid {
+			grid-template-columns: repeat(1, minmax(0, 1fr));
+		}
 	}
 
 	.actions {

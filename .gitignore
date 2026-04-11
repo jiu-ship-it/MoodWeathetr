@@ -27,9 +27,6 @@ coverage.xml
 *.sqlite3
 /python_flask/instance/
 /python_flask/uploads/
-/python_flask/local_resources/audio/
-/python_flask/local_resources/images/
-/python_flask/local_resources/videos/
 
 # ---------- Frontend (uni-app) ----------
 /uniapp_vue_main/unpackage/

@@ -56,6 +56,10 @@
   {
     "path": "pages/VideoPlayer/VideoPlayer",
     "style": {}
+  },
+  {
+    "path": "pages/ResourceDetail/ResourceDetail",
+    "style": {}
   }
   ]
 }
