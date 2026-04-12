@@ -437,6 +437,45 @@
 				}
 				return `${(num * 100).toFixed(2)}%`;
 			},
+			isLowAlertAnalysis(analysis) {
+				if (!analysis) {
+					return false;
+				}
+				const probs = analysis && analysis.probabilities && analysis.probabilities.M;
+				const classCount = Array.isArray(probs) && probs.length ? probs.length : 3;
+				const p = Number(analysis.prediction);
+				let normalized = 0;
+				if (!Number.isNaN(p)) {
+					if (p >= 1 && p <= classCount) {
+						normalized = p;
+					} else if (p >= 0 && p < classCount) {
+						normalized = p + 1;
+					}
+				}
+				if (!normalized && Array.isArray(probs) && probs.length) {
+					let maxIdx = 0;
+					for (let i = 1; i < probs.length; i += 1) {
+						if (Number(probs[i]) > Number(probs[maxIdx])) {
+							maxIdx = i;
+						}
+					}
+					normalized = maxIdx + 1;
+				}
+				return normalized === 1;
+			},
+			suggestProfessionalSupport() {
+				uni.showModal({
+					title: '低落预警提醒',
+					content: '系统检测到你当前处于低落预警状态。建议预约更专业的心理咨询服务，获得更及时的支持。',
+					confirmText: '立即了解',
+					cancelText: '稍后再说',
+					success: (modalRes) => {
+						if (modalRes.confirm) {
+							uni.showToast({ title: '请前往设置页查看咨询入口', icon: 'none' });
+						}
+					}
+				});
+			},
 			analyzeNow() {
 				if (!this.noteId || this.isLoading) {
 					return;
@@ -458,8 +497,12 @@
 						this.isLoading = false;
 						if (res.statusCode === 200 && res.data) {
 							this.analyzedAt = res.data.analyzed_at || '';
-							this.applyAnalysis(res.data.analysis);
+							const analysis = this.parseAnalysis(res.data.analysis);
+							this.applyAnalysis(analysis);
 							uni.showToast({ title: '分析完成', icon: 'success' });
+							if (this.isLowAlertAnalysis(analysis)) {
+								this.suggestProfessionalSupport();
+							}
 							this.fetchModelStatus();
 							return;
 						}
