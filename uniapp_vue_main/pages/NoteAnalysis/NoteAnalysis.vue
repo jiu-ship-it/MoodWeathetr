@@ -142,6 +142,33 @@
 			</view>
 		</view>
 
+		<view class="support-popup-mask" v-if="showSupportPopup" @click="closeSupportPopup">
+			<view class="support-popup-card" @click.stop>
+				<text class="support-popup-deco left">✦</text>
+				<text class="support-popup-deco right">✿</text>
+				<view class="support-header">
+					<image class="support-avatar" src="/static/image/smileICON.png" mode="aspectFill" />
+					<view class="support-head-text">
+						<text class="support-title">心理支持小站</text>
+						<text class="support-subtitle">先抱抱你，今天也已经很努力了</text>
+					</view>
+				</view>
+				<view class="support-tags">
+					<text class="support-tag">慢一点也没关系</text>
+					<text class="support-tag">你值得被好好照顾</text>
+				</view>
+				<text class="support-desc">检测到你现在有些低落。你可以先休息一下，也可以前往心理咨询入口，获取更及时、温柔的支持。</text>
+				<view class="support-popup-actions">
+					<view class="support-popup-btn ghost" @click="closeSupportPopup">
+						<text class="support-popup-btn-text ghost">稍后再看</text>
+					</view>
+					<view class="support-popup-btn solid" @click="confirmSupportPopup">
+						<text class="support-popup-btn-text">查看咨询入口</text>
+					</view>
+				</view>
+			</view>
+		</view>
+
 		<BottomNav current="analysis" />
 	</view>
 </template>
@@ -149,6 +176,7 @@
 <script>
 	import { BASE_URL } from '@/common/config.js';
 	import BottomNav from '@/components/BottomNav.vue';
+	import { parseAnalysisPayload, normalizePredictionFromAnalysis, isLowAlertFromAnalysis } from '@/common/emotionAnalysis.js';
 
 	export default {
 		components: { BottomNav },
@@ -167,7 +195,12 @@
 				resourceVideos: [],
 				resourceMusic: [],
 				modelReachable: null,
-				modelStatusText: ''
+				modelStatusText: '',
+				pendingSupportPrompt: false,
+				hasShownSupportPrompt: false,
+				supportPromptTimer: null,
+				showSupportPopup: false,
+				supportCloseCallback: null
 			};
 		},
 		computed: {
@@ -175,27 +208,8 @@
 				return !!(this.analysisObj && this.analysisObj.probabilities);
 			},
 			normalizedPrediction() {
-				const probs = this.analysisObj && this.analysisObj.probabilities && this.analysisObj.probabilities.M;
-				const classCount = Array.isArray(probs) && probs.length ? probs.length : 3;
-				const p = Number(this.analysisObj && this.analysisObj.prediction);
-				if (!Number.isNaN(p)) {
-					if (p >= 1 && p <= classCount) {
-						return p;
-					}
-					if (p >= 0 && p < classCount) {
-						return p + 1;
-					}
-				}
-				if (Array.isArray(probs) && probs.length) {
-					let maxIdx = 0;
-					for (let i = 1; i < probs.length; i += 1) {
-						if (Number(probs[i]) > Number(probs[maxIdx])) {
-							maxIdx = i;
-						}
-					}
-					return maxIdx + 1;
-				}
-				return '-';
+				const normalized = normalizePredictionFromAnalysis(this.analysisObj);
+				return normalized || '-';
 			},
 			fusionConfidence() {
 				const m = this.analysisObj && this.analysisObj.probabilities && this.analysisObj.probabilities.M;
@@ -292,15 +306,27 @@
 					]
 				};
 				return packs[idx] || packs[0];
+			},
+			isLowAlertCurrent() {
+				return this.isLowAlertAnalysis(this.analysisObj);
 			}
 		},
 		onLoad(options) {
 			if (options && options.id) {
 				this.noteId = options.id;
 				this.simpleMode = String(options.simple || '') === '1';
+				this.pendingSupportPrompt = String(options.supportPrompt || '') === '1';
 				this.fetchModelStatus();
 				this.fetchNoteDetail();
 			}
+		},
+		onUnload() {
+			if (this.supportPromptTimer) {
+				clearTimeout(this.supportPromptTimer);
+				this.supportPromptTimer = null;
+			}
+			this.showSupportPopup = false;
+			this.supportCloseCallback = null;
 		},
 		methods: {
 			fetchModelStatus() {
@@ -366,6 +392,9 @@
 				this.expandedPushIndex = this.hasAnalysis ? 0 : -1;
 				if (this.hasAnalysis) {
 					this.fetchEmotionResources(String(this.normalizedPrediction || ''));
+					if (this.pendingSupportPrompt && this.isLowAlertCurrent) {
+						this.queueSupportPrompt(900);
+					}
 				} else {
 					this.resourceImageText = [];
 					this.resourceVideos = [];
@@ -373,17 +402,7 @@
 				}
 			},
 			parseAnalysis(payload) {
-				if (!payload) {
-					return null;
-				}
-				if (typeof payload === 'string') {
-					try {
-						return JSON.parse(payload);
-					} catch (e) {
-						return null;
-					}
-				}
-				return payload;
+				return parseAnalysisPayload(payload);
 			},
 			branchPredictionIndex(branchKey) {
 				const probs = this.analysisObj && this.analysisObj.probabilities && this.analysisObj.probabilities[branchKey];
@@ -438,46 +457,45 @@
 				return `${(num * 100).toFixed(2)}%`;
 			},
 			isLowAlertAnalysis(analysis) {
-				if (!analysis) {
-					return false;
-				}
-				const probs = analysis && analysis.probabilities && analysis.probabilities.M;
-				const classCount = Array.isArray(probs) && probs.length ? probs.length : 3;
-				const p = Number(analysis.prediction);
-				let normalized = 0;
-				if (!Number.isNaN(p)) {
-					if (p >= 1 && p <= classCount) {
-						normalized = p;
-					} else if (p >= 0 && p < classCount) {
-						normalized = p + 1;
-					}
-				}
-				if (!normalized && Array.isArray(probs) && probs.length) {
-					let maxIdx = 0;
-					for (let i = 1; i < probs.length; i += 1) {
-						if (Number(probs[i]) > Number(probs[maxIdx])) {
-							maxIdx = i;
-						}
-					}
-					normalized = maxIdx + 1;
-				}
-				return normalized === 1;
+				return isLowAlertFromAnalysis(analysis);
 			},
 			suggestProfessionalSupport(onClose) {
-				uni.showModal({
-					title: '低落预警提醒',
-					content: '系统检测到你当前处于低落预警状态。建议预约更专业的心理咨询服务，获得更及时的支持。',
-					confirmText: '立即了解',
-					cancelText: '稍后再说',
-					success: (modalRes) => {
-						if (modalRes.confirm) {
-							uni.showToast({ title: '请前往设置页查看咨询入口', icon: 'none' });
-						}
-						if (typeof onClose === 'function') {
-							onClose();
-						}
-					}
+				this.supportCloseCallback = typeof onClose === 'function' ? onClose : null;
+				this.showSupportPopup = true;
+			},
+			closeSupportPopup() {
+				this.showSupportPopup = false;
+				const cb = this.supportCloseCallback;
+				this.supportCloseCallback = null;
+				if (typeof cb === 'function') {
+					cb();
+				}
+			},
+			confirmSupportPopup() {
+				this.openSupportEntry();
+				this.closeSupportPopup();
+			},
+			queueSupportPrompt(delay = 700) {
+				if (this.simpleMode || this.hasShownSupportPrompt || !this.isLowAlertCurrent) {
+					return;
+				}
+				if (this.supportPromptTimer) {
+					clearTimeout(this.supportPromptTimer);
+				}
+				this.$nextTick(() => {
+					this.supportPromptTimer = setTimeout(() => {
+						this.suggestProfessionalSupport(() => {
+							this.fetchModelStatus();
+						});
+						this.hasShownSupportPrompt = true;
+						this.pendingSupportPrompt = false;
+						this.supportPromptTimer = null;
+					}, delay);
 				});
+			},
+			openSupportEntry() {
+				uni.showToast({ title: '请前往设置页查看咨询入口', icon: 'none' });
+				uni.navigateTo({ url: '/pages/Setting/Setting' });
 			},
 			analyzeNow() {
 				if (!this.noteId || this.isLoading) {
@@ -502,13 +520,11 @@
 							this.analyzedAt = res.data.analyzed_at || '';
 							const analysis = this.parseAnalysis(res.data.analysis);
 							this.applyAnalysis(analysis);
+							uni.showToast({ title: '分析完成', icon: 'success' });
 							if (this.isLowAlertAnalysis(analysis)) {
-								this.suggestProfessionalSupport(() => {
-									this.fetchModelStatus();
-								});
+								this.queueSupportPrompt(850);
 								return;
 							}
-							uni.showToast({ title: '分析完成', icon: 'success' });
 							this.fetchModelStatus();
 							return;
 						}
@@ -910,6 +926,151 @@
 
 	.push-action-text.dark {
 		color: #2f4a5f;
+	}
+
+	.support-popup-mask {
+		position: fixed;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		background: rgba(30, 33, 40, 0.48);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 28rpx;
+		z-index: 1200;
+	}
+
+	.support-popup-card {
+		position: relative;
+		width: 100%;
+		max-width: 640rpx;
+		border-radius: 28rpx;
+		padding: 26rpx;
+		background: linear-gradient(140deg, #fff5f7 0%, #fffdf6 65%, #f6fff8 100%);
+		border: 2rpx solid #f6dce5;
+		box-shadow: 0 24rpx 46rpx rgba(66, 38, 50, 0.26);
+	}
+
+	.support-popup-deco {
+		position: absolute;
+		font-size: 30rpx;
+		color: #f08cab;
+	}
+
+	.support-popup-deco.left {
+		left: 18rpx;
+		top: 14rpx;
+	}
+
+	.support-popup-deco.right {
+		right: 18rpx;
+		top: 14rpx;
+	}
+
+	.support-header {
+		display: flex;
+		align-items: center;
+		gap: 16rpx;
+	}
+
+	.support-avatar {
+		width: 78rpx;
+		height: 78rpx;
+		border-radius: 50%;
+		border: 3rpx solid #ffd7e4;
+		background: #fff;
+	}
+
+	.support-head-text {
+		flex: 1;
+	}
+
+	.support-title {
+		display: block;
+		font-size: 29rpx;
+		font-weight: 700;
+		color: #8d3955;
+	}
+
+	.support-subtitle {
+		display: block;
+		margin-top: 4rpx;
+		font-size: 23rpx;
+		color: #a95f76;
+	}
+
+	.support-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10rpx;
+		margin-top: 12rpx;
+	}
+
+	.support-tag {
+		padding: 6rpx 14rpx;
+		background: #fff0f5;
+		border-radius: 999rpx;
+		font-size: 21rpx;
+		color: #964e65;
+		border: 1rpx solid #f8d8e2;
+	}
+
+	.support-desc {
+		display: block;
+		margin-top: 12rpx;
+		font-size: 24rpx;
+		line-height: 34rpx;
+		color: #744654;
+	}
+
+	.support-action {
+		display: inline-flex;
+		margin-top: 14rpx;
+		padding: 10rpx 22rpx;
+		border-radius: 999rpx;
+		background: linear-gradient(120deg, #ff9fbc 0%, #ff7ea3 100%);
+	}
+
+	.support-action-text {
+		font-size: 23rpx;
+		font-weight: 600;
+		color: #ffffff;
+	}
+
+	.support-popup-actions {
+		display: flex;
+		gap: 12rpx;
+		margin-top: 16rpx;
+	}
+
+	.support-popup-btn {
+		flex: 1;
+		display: inline-flex;
+		justify-content: center;
+		align-items: center;
+		padding: 12rpx 18rpx;
+		border-radius: 999rpx;
+	}
+
+	.support-popup-btn.solid {
+		background: linear-gradient(120deg, #ff9fbc 0%, #ff7ea3 100%);
+	}
+
+	.support-popup-btn.ghost {
+		background: #fff;
+		border: 1rpx solid #f0cdd8;
+	}
+
+	.support-popup-btn-text {
+		font-size: 23rpx;
+		font-weight: 600;
+		color: #ffffff;
+	}
+
+	.support-popup-btn-text.ghost {
+		color: #9a5a70;
 	}
 
 	.resource-panel {

@@ -95,6 +95,7 @@
 <script>
 import { BASE_URL } from '@/common/config.js';
 import BottomNav from '@/components/BottomNav.vue';
+import { parseAnalysisPayload, normalizePredictionFromAnalysis } from '@/common/emotionAnalysis.js';
 
 export default {
   components: { BottomNav },
@@ -108,8 +109,8 @@ export default {
     analyzedNotes() {
       return this.notes
         .map((note) => {
-          const analysis = this.parseAnalysis(note.analysis_result);
-          const idx = this.normalizePrediction(analysis);
+          const analysis = parseAnalysisPayload(note.analysis_result);
+          const idx = normalizePredictionFromAnalysis(analysis);
           if (!idx) {
             return null;
           }
@@ -256,36 +257,6 @@ export default {
           }
         }
       });
-    },
-    parseAnalysis(payload) {
-      if (!payload) return null;
-      if (typeof payload === 'string') {
-        try {
-          return JSON.parse(payload);
-        } catch (e) {
-          return null;
-        }
-      }
-      return payload;
-    },
-    normalizePrediction(analysis) {
-      const probs = analysis && analysis.probabilities && analysis.probabilities.M;
-      const classCount = Array.isArray(probs) && probs.length ? probs.length : 3;
-      const p = Number(analysis && analysis.prediction);
-      if (!Number.isNaN(p)) {
-        if (p >= 1 && p <= classCount) return p;
-        if (p >= 0 && p < classCount) return p + 1;
-      }
-      if (Array.isArray(probs) && probs.length) {
-        let maxIdx = 0;
-        for (let i = 1; i < probs.length; i += 1) {
-          if (Number(probs[i]) > Number(probs[maxIdx])) {
-            maxIdx = i;
-          }
-        }
-        return maxIdx + 1;
-      }
-      return 0;
     },
     parseDateSafe(value) {
       if (!value) return NaN;

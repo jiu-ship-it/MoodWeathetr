@@ -86,6 +86,7 @@
 <script>
 import BottomNav from '@/components/BottomNav.vue';
 import { apiRequestUnified } from '@/common/request.js';
+import { parseAnalysisPayload, normalizePredictionFromAnalysis } from '@/common/emotionAnalysis.js';
 
 export default {
   components: { BottomNav },
@@ -152,39 +153,11 @@ export default {
         });
         const recent = sorted.find((n) => !!n.analysis_result);
         if (!recent) return '';
-        const parsed = this.parseAnalysis(recent.analysis_result);
-        return String(this.normalizePrediction(parsed) || '');
+        const parsed = parseAnalysisPayload(recent.analysis_result);
+        return String(normalizePredictionFromAnalysis(parsed) || '');
       } catch (e) {
         return '';
       }
-    },
-    parseAnalysis(payload) {
-      if (!payload) return null;
-      if (typeof payload === 'string') {
-        try {
-          return JSON.parse(payload);
-        } catch (e) {
-          return null;
-        }
-      }
-      return payload;
-    },
-    normalizePrediction(analysis) {
-      const probs = analysis && analysis.probabilities && analysis.probabilities.M;
-      const classCount = Array.isArray(probs) && probs.length ? probs.length : 3;
-      const p = Number(analysis && analysis.prediction);
-      if (!Number.isNaN(p)) {
-        if (p >= 1 && p <= classCount) return p;
-        if (p >= 0 && p < classCount) return p + 1;
-      }
-      if (Array.isArray(probs) && probs.length) {
-        let maxIdx = 0;
-        for (let i = 1; i < probs.length; i += 1) {
-          if (Number(probs[i]) > Number(probs[maxIdx])) maxIdx = i;
-        }
-        return maxIdx + 1;
-      }
-      return 0;
     },
     selectGroup(tag) {
       this.activeTag = String(tag || '');

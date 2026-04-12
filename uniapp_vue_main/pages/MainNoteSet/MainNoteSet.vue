@@ -57,6 +57,7 @@
 
 <script>
 	import { BASE_URL } from '@/common/config.js';
+	import { parseAnalysisPayload, isLowAlertFromAnalysis } from '@/common/emotionAnalysis.js';
 
 	export default {
 		components: {},
@@ -141,44 +142,8 @@
 				}
 				uni.navigateTo({ url: `/pages/NoteAnalysis/NoteAnalysis?id=${note.id}` });
 			},
-			parseAnalysis(payload) {
-				if (!payload) {
-					return null;
-				}
-				if (typeof payload === 'string') {
-					try {
-						return JSON.parse(payload);
-					} catch (e) {
-						return null;
-					}
-				}
-				return payload;
-			},
 			isLowAlertAnalysis(analysis) {
-				if (!analysis) {
-					return false;
-				}
-				const probs = analysis && analysis.probabilities && analysis.probabilities.M;
-				const classCount = Array.isArray(probs) && probs.length ? probs.length : 3;
-				const p = Number(analysis.prediction);
-				let normalized = 0;
-				if (!Number.isNaN(p)) {
-					if (p >= 1 && p <= classCount) {
-						normalized = p;
-					} else if (p >= 0 && p < classCount) {
-						normalized = p + 1;
-					}
-				}
-				if (!normalized && Array.isArray(probs) && probs.length) {
-					let maxIdx = 0;
-					for (let i = 1; i < probs.length; i += 1) {
-						if (Number(probs[i]) > Number(probs[maxIdx])) {
-							maxIdx = i;
-						}
-					}
-					normalized = maxIdx + 1;
-				}
-				return normalized === 1;
+				return isLowAlertFromAnalysis(analysis);
 			},
 			suggestProfessionalSupport(onClose) {
 				uni.showModal({
@@ -207,11 +172,9 @@
 						uni.hideLoading();
 						if (res.statusCode === 200) {
 							const rawAnalysis = res && res.data ? (res.data.analysis || res.data.analysis_result) : null;
-							const analysis = this.parseAnalysis(rawAnalysis);
+							const analysis = parseAnalysisPayload(rawAnalysis);
 							if (this.isLowAlertAnalysis(analysis)) {
-								this.suggestProfessionalSupport(() => {
-									uni.navigateTo({ url: `/pages/NoteAnalysis/NoteAnalysis?id=${noteId}` });
-								});
+								uni.navigateTo({ url: `/pages/NoteAnalysis/NoteAnalysis?id=${noteId}&supportPrompt=1` });
 								return;
 							}
 							uni.navigateTo({ url: `/pages/NoteAnalysis/NoteAnalysis?id=${noteId}` });

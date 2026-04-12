@@ -11,9 +11,17 @@ import requests
 from datetime import datetime, timedelta
 import json
 import subprocess
-from urllib.parse import quote
 import tempfile
 import io
+
+from services.resource_service import (
+    build_resource_bundles,
+    init_resource_paths,
+    load_emotion_feed_rows,
+    load_music_rows,
+    normalize_emotion_tag,
+)
+from utils.api_response import api_ok
 
 # 初始化Flask应用
 db = SQLAlchemy()
@@ -82,32 +90,16 @@ app.config['MODEL_SERVICE_URL'] = model_service_url
 app.config['FFMPEG_PATH'] = os.environ.get('FFMPEG_PATH', 'ffmpeg')
 app.config['MODEL_ANALYZE_URL'] = os.environ.get('MODEL_ANALYZE_URL', model_service_url)
 
-LOCAL_RESOURCE_ROOT = os.path.join(app.root_path, 'local_resources')
-LOCAL_EMOTION_FEED_FILE = os.path.join(LOCAL_RESOURCE_ROOT, 'emotion_feeds.json')
-LOCAL_MUSIC_FILE = os.path.join(LOCAL_RESOURCE_ROOT, 'music_list.json')
 WEB_DIST_ROOT = os.path.join(app.root_path, 'web_dist')
 WEB_INDEX_FILE = os.path.join(WEB_DIST_ROOT, 'index.html')
 
-os.makedirs(LOCAL_RESOURCE_ROOT, exist_ok=True)
-os.makedirs(os.path.join(LOCAL_RESOURCE_ROOT, 'audio'), exist_ok=True)
-os.makedirs(os.path.join(LOCAL_RESOURCE_ROOT, 'images'), exist_ok=True)
+init_resource_paths(app)
 
 
 def serve_h5_index_or_backend_message():
     if os.path.exists(WEB_INDEX_FILE):
         return send_from_directory(WEB_DIST_ROOT, 'index.html')
     return jsonify({"message": "WarmLabel backend is running"})
-
-
-def api_ok(data=None, message='ok'):
-    return jsonify({'code': 0, 'message': message, 'data': data if data is not None else {}}), 200
-
-
-def api_error(message, status=400, code=1, data=None):
-    payload = {'code': code, 'message': message}
-    if data is not None:
-        payload['data'] = data
-    return jsonify(payload), status
 
 
 def parse_allowed_origins():
@@ -410,186 +402,6 @@ def note_audio_url(note):
     return f"{request.host_url.rstrip('/')}/api/notes/{note.id}/audio"
 
 
-def load_json_array(file_path, default_items):
-    if not os.path.exists(file_path):
-        return default_items
-    try:
-        # Support UTF-8 with BOM (common when files are saved via Windows PowerShell).
-        with open(file_path, 'r', encoding='utf-8-sig') as f:
-            payload = json.load(f)
-        if isinstance(payload, list):
-            return payload
-    except (OSError, json.JSONDecodeError):
-        pass
-    return default_items
-
-
-def local_resource_url(path_value):
-    if not path_value:
-        return None
-    text = str(path_value).strip()
-    if not text:
-        return None
-    if text.startswith('http://') or text.startswith('https://'):
-        return text
-    normalized = text.lstrip('/').replace('\\', '/')
-    encoded = '/'.join(quote(part) for part in normalized.split('/'))
-    return f"{request.host_url.rstrip('/')}/api/local-resources/{encoded}"
-
-
-def normalize_emotion_tag(raw_value):
-    text = str(raw_value or '').strip().lower()
-    map_table = {
-        '1': '1',
-        '2': '2',
-        '3': '3',
-        '低落预警': '1',
-        '低落': '1',
-        'sad': '1',
-        '平稳': '2',
-        'stable': '2',
-        '高兴': '3',
-        '开心': '3',
-        'happy': '3'
-    }
-    return map_table.get(text, '')
-
-
-RESOURCE_GROUP_META = {
-    '1': {
-        'key': 'relief',
-        'name': '舒缓减压',
-        'audience': '低落预警人群',
-        'description': '优先推送安抚型图文、呼吸放松与情绪承接内容。'
-    },
-    '2': {
-        'key': 'balance',
-        'name': '稳定维持',
-        'audience': '平稳人群',
-        'description': '优先推送习惯维护、轻复盘与节奏管理内容。'
-    },
-    '3': {
-        'key': 'thrive',
-        'name': '激活成长',
-        'audience': '积极高兴人群',
-        'description': '优先推送目标推进、行动放大与成长型内容。'
-    }
-}
-
-
-def resource_group_info(tag):
-    return RESOURCE_GROUP_META.get(tag or '', {
-        'key': 'general',
-        'name': '通用资源',
-        'audience': '全部人群',
-        'description': '适用于全部用户的通用内容。'
-    })
-
-
-def load_emotion_feed_rows(target_tag=''):
-    default_items = [
-        {
-            'emotion_tag': '1',
-            'type': 'imageText',
-            'title': '低落期自我支持清单',
-            'desc': '先稳住，再行动，先从最小步开始。',
-            'detail': '先做一件5分钟内可完成的小事，再决定下一步。',
-            'is_active': True
-        },
-        {
-            'emotion_tag': '2',
-            'type': 'imageText',
-            'title': '稳定情绪维护法',
-            'desc': '固定作息和轻量复盘，保持心态稳定。',
-            'detail': '每天固定10分钟复盘，记录最稳的一刻。',
-            'is_active': True
-        },
-        {
-            'emotion_tag': '3',
-            'type': 'video',
-            'title': '积极状态放大术',
-            'desc': '趁状态好，把可执行目标拆小并推进。',
-            'url': 'https://www.bilibili.com/video/BV1V4411Z7VA',
-            'is_active': True
-        }
-    ]
-    source = load_json_array(LOCAL_EMOTION_FEED_FILE, default_items)
-    image_text = []
-    videos = []
-
-    for item in source:
-        if not isinstance(item, dict):
-            continue
-        if item.get('is_active', True) is False:
-            continue
-
-        tag = normalize_emotion_tag(item.get('emotion_tag'))
-        if target_tag and tag and tag != target_tag:
-            continue
-
-        row = {
-            'title': item.get('title') or '未命名内容',
-            'desc': item.get('desc') or '',
-            'detail': item.get('detail') or item.get('desc') or '',
-            'emotion_tag': tag
-        }
-        group_info = resource_group_info(tag)
-        row['group_key'] = group_info['key']
-        row['group_name'] = group_info['name']
-
-        item_type = str(item.get('type') or 'imageText').strip()
-        if item_type == 'video':
-            row['url'] = local_resource_url(item.get('url'))
-            row['cover'] = local_resource_url(item.get('cover'))
-            if row['url']:
-                videos.append(row)
-        else:
-            row['cover'] = local_resource_url(item.get('cover'))
-            image_text.append(row)
-
-    return image_text, videos
-
-
-def load_music_rows(target_tag=''):
-    default_items = [
-        {
-            'emotion_tag': '2',
-            'name': 'Calm Demo',
-            'author': 'WarmLabel',
-            'url': 'audio/calm_demo.mp3',
-            'is_active': True
-        }
-    ]
-    source = load_json_array(LOCAL_MUSIC_FILE, default_items)
-    music_items = []
-
-    for item in source:
-        if not isinstance(item, dict):
-            continue
-        if item.get('is_active', True) is False:
-            continue
-
-        tag = normalize_emotion_tag(item.get('emotion_tag'))
-        if target_tag and tag and tag != target_tag:
-            continue
-
-        group_info = resource_group_info(tag)
-        row = {
-            'name': item.get('name') or '未命名音乐',
-            'author': item.get('author') or '未知创作者',
-            'url': local_resource_url(item.get('url')),
-            'cover': local_resource_url(item.get('cover')),
-            'duration': item.get('duration'),
-            'emotion_tag': tag,
-            'group_key': group_info['key'],
-            'group_name': group_info['name']
-        }
-        if row['url']:
-            music_items.append(row)
-
-    return music_items
-
-
 def is_placeholder_model_url(url):
     text = (url or '').strip().lower()
     return (not text) or ('your-model-service.example.com' in text)
@@ -629,21 +441,26 @@ def build_local_fallback_analysis(text):
 
 @app.route('/api/local-resources/<path:resource_path>', methods=['GET'])
 def get_local_resource(resource_path):
-    abs_root = os.path.abspath(LOCAL_RESOURCE_ROOT)
-    abs_target = os.path.abspath(os.path.join(LOCAL_RESOURCE_ROOT, resource_path))
+    root = app.config['LOCAL_RESOURCE_ROOT']
+    abs_root = os.path.abspath(root)
+    abs_target = os.path.abspath(os.path.join(root, resource_path))
 
     if os.path.commonpath([abs_root, abs_target]) != abs_root:
         return jsonify({'error': '非法资源路径'}), 400
     if not os.path.exists(abs_target):
         return jsonify({'error': '资源不存在'}), 404
 
-    return send_from_directory(LOCAL_RESOURCE_ROOT, resource_path, as_attachment=False)
+    return send_from_directory(root, resource_path, as_attachment=False)
 
 
 @app.route('/api/emotion-feeds', methods=['GET'])
 def get_emotion_feeds():
     target_tag = normalize_emotion_tag(request.args.get('emotion'))
-    image_text, videos = load_emotion_feed_rows(target_tag)
+    image_text, videos = load_emotion_feed_rows(
+        target_tag,
+        app.config['LOCAL_EMOTION_FEED_FILE'],
+        request.host_url,
+    )
 
     return jsonify({
         'emotion_tag': target_tag,
@@ -655,7 +472,11 @@ def get_emotion_feeds():
 @app.route('/api/music-recommendations', methods=['GET'])
 def get_music_recommendations():
     target_tag = normalize_emotion_tag(request.args.get('emotion'))
-    music_items = load_music_rows(target_tag)
+    music_items = load_music_rows(
+        target_tag,
+        app.config['LOCAL_MUSIC_FILE'],
+        request.host_url,
+    )
 
     return jsonify({'items': music_items}), 200
 
@@ -663,54 +484,13 @@ def get_music_recommendations():
 @app.route('/api/resource-bundles', methods=['GET'])
 def get_resource_bundles():
     target_tag = normalize_emotion_tag(request.args.get('emotion'))
-    image_text, videos = load_emotion_feed_rows('')
-    musics = load_music_rows('')
-
-    groups = {}
-    for tag in ('1', '2', '3'):
-        meta = resource_group_info(tag)
-        groups[tag] = {
-            'emotion_tag': tag,
-            'group_key': meta['key'],
-            'group_name': meta['name'],
-            'audience': meta['audience'],
-            'description': meta['description'],
-            'imageText': [],
-            'videos': [],
-            'music': []
-        }
-
-    for item in image_text:
-        tag = normalize_emotion_tag(item.get('emotion_tag'))
-        if tag in groups:
-            groups[tag]['imageText'].append(item)
-
-    for item in videos:
-        tag = normalize_emotion_tag(item.get('emotion_tag'))
-        if tag in groups:
-            groups[tag]['videos'].append(item)
-
-    for item in musics:
-        tag = normalize_emotion_tag(item.get('emotion_tag'))
-        if tag in groups:
-            groups[tag]['music'].append(item)
-
-    recommended_tag = target_tag if target_tag in groups else ''
-    if not recommended_tag:
-        max_tag = ''
-        max_total = -1
-        for tag, block in groups.items():
-            total = len(block['imageText']) + len(block['videos']) + len(block['music'])
-            if total > max_total:
-                max_total = total
-                max_tag = tag
-        recommended_tag = max_tag
-
-    return api_ok({
-        'recommended_emotion_tag': recommended_tag,
-        'recommended_group': groups.get(recommended_tag),
-        'groups': groups
-    }, message='资源分群加载成功')
+    bundle = build_resource_bundles(
+        target_tag,
+        app.config['LOCAL_EMOTION_FEED_FILE'],
+        app.config['LOCAL_MUSIC_FILE'],
+        request.host_url,
+    )
+    return api_ok(bundle, message='资源分群加载成功')
 
 
 @app.route('/api/notes', methods=['POST'])
