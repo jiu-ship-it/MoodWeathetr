@@ -463,7 +463,7 @@
 				}
 				return normalized === 1;
 			},
-			suggestProfessionalSupport() {
+			suggestProfessionalSupport(onClose) {
 				uni.showModal({
 					title: '低落预警提醒',
 					content: '系统检测到你当前处于低落预警状态。建议预约更专业的心理咨询服务，获得更及时的支持。',
@@ -472,6 +472,9 @@
 					success: (modalRes) => {
 						if (modalRes.confirm) {
 							uni.showToast({ title: '请前往设置页查看咨询入口', icon: 'none' });
+						}
+						if (typeof onClose === 'function') {
+							onClose();
 						}
 					}
 				});
@@ -499,10 +502,13 @@
 							this.analyzedAt = res.data.analyzed_at || '';
 							const analysis = this.parseAnalysis(res.data.analysis);
 							this.applyAnalysis(analysis);
-							uni.showToast({ title: '分析完成', icon: 'success' });
 							if (this.isLowAlertAnalysis(analysis)) {
-								this.suggestProfessionalSupport();
+								this.suggestProfessionalSupport(() => {
+									this.fetchModelStatus();
+								});
+								return;
 							}
+							uni.showToast({ title: '分析完成', icon: 'success' });
 							this.fetchModelStatus();
 							return;
 						}

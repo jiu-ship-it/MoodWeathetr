@@ -141,6 +141,19 @@
 				}
 				uni.navigateTo({ url: `/pages/NoteAnalysis/NoteAnalysis?id=${note.id}` });
 			},
+			parseAnalysis(payload) {
+				if (!payload) {
+					return null;
+				}
+				if (typeof payload === 'string') {
+					try {
+						return JSON.parse(payload);
+					} catch (e) {
+						return null;
+					}
+				}
+				return payload;
+			},
 			isLowAlertAnalysis(analysis) {
 				if (!analysis) {
 					return false;
@@ -167,7 +180,7 @@
 				}
 				return normalized === 1;
 			},
-			suggestProfessionalSupport() {
+			suggestProfessionalSupport(onClose) {
 				uni.showModal({
 					title: '低落预警提醒',
 					content: '系统检测到你当前处于低落预警状态。建议预约更专业的心理咨询服务，获得更及时的支持。',
@@ -176,6 +189,9 @@
 					success: (modalRes) => {
 						if (modalRes.confirm) {
 							uni.showToast({ title: '请前往设置页查看咨询入口', icon: 'none' });
+						}
+						if (typeof onClose === 'function') {
+							onClose();
 						}
 					}
 				});
@@ -190,9 +206,13 @@
 					success: (res) => {
 						uni.hideLoading();
 						if (res.statusCode === 200) {
-							const analysis = res && res.data ? (res.data.analysis || res.data.analysis_result) : null;
+							const rawAnalysis = res && res.data ? (res.data.analysis || res.data.analysis_result) : null;
+							const analysis = this.parseAnalysis(rawAnalysis);
 							if (this.isLowAlertAnalysis(analysis)) {
-								this.suggestProfessionalSupport();
+								this.suggestProfessionalSupport(() => {
+									uni.navigateTo({ url: `/pages/NoteAnalysis/NoteAnalysis?id=${noteId}` });
+								});
+								return;
 							}
 							uni.navigateTo({ url: `/pages/NoteAnalysis/NoteAnalysis?id=${noteId}` });
 						} else if (res.statusCode === 501) {
