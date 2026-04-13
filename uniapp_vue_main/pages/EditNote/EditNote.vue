@@ -16,15 +16,6 @@
           <!-- <text class="font_2 text_5">请输入内容</text> -->
         </textarea>
 
-				<text class="self-start font text_6">选择当前情绪(必) 当前：{{ ChooseEmoPop }}</text>
-				<view>
-					<image class="image" :class="{ 'image-selected': ChooseEmoPop === 1 }" src="/static/image/smileICON.png"
-						@click="ChooseEmoPop = 1" />
-					<image class="image" :class="{ 'image-selected': ChooseEmoPop === 2 }" src="/static/image/little.png"
-						@click="ChooseEmoPop = 2" />
-					<image class="image" :class="{ 'image-selected': ChooseEmoPop === 3 }" src="/static/image/Unhappy.png"
-						@click="ChooseEmoPop = 3" />
-				</view>
 			</view>
 
 			<view class="flex-col mt-27">
@@ -68,7 +59,6 @@
 				title: '',
 				content: '',
 				noteId: null,
-				ChooseEmoPop: 1,
 				tips_visible: "hidden",
 				CanPlay_visible: "hidden",
 				voicePath: '',
@@ -176,14 +166,6 @@
 					});
 					return;
 				}
-				if (!this.ChooseEmoPop) {
-					uni.showToast({
-						title: '请选择情绪',
-						icon: 'none'
-					});
-					return;
-				}
-
 				uni.showLoading({ title: '保存中...' });
 
 				const token = uni.getStorageSync('token');
@@ -207,7 +189,6 @@
 							formData: {
 								title: this.title,
 								content: this.content,
-								emotion: this.ChooseEmoPop,
 								audio_duration: this.recordedSeconds || 0
 							},
 							success: (res) => {
@@ -248,7 +229,6 @@
 						formData: {
 							title: this.title,
 							content: this.content,
-							emotion: this.ChooseEmoPop,
 							audio_duration: this.recordedSeconds || 0
 						},
 						success: (res) => {
@@ -287,7 +267,6 @@
 						data: {
 							title: this.title,
 							content: this.content,
-							emotion: this.ChooseEmoPop,
 							audio_duration: this.recordedSeconds || 0
 						},
 						success: (res) => {
@@ -317,7 +296,6 @@
 						if (res.statusCode === 200 && res.data) {
 							this.title = res.data.title || '';
 							this.content = res.data.content || '';
-							this.ChooseEmoPop = Number(res.data.emotion) || 1;
 							this.recordedSeconds = Number(res.data.audio_duration) || 0;
 							if (res.data.audio_path) {
 								this.hasSavedAudio = true;

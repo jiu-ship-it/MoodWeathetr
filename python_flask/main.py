@@ -505,11 +505,11 @@ def create_note():
         content = payload.get('content')
         emotion = payload.get('emotion')
         audio_duration_raw = payload.get('audio_duration')
-        emotion_value = int(emotion) if emotion is not None else None
+        emotion_value = parse_int_or_none(emotion)
         audio_duration = parse_int_or_none(audio_duration_raw)
 
-        if not title or not content or emotion_value is None:
-            return jsonify({'error': 'Title, content and emotion are required'}), 400
+        if not title or not content:
+            return jsonify({'error': 'Title and content are required'}), 400
 
         audio_file = request.files.get('audio')
         audio_path = None
@@ -733,11 +733,11 @@ def update_note(note_id):
         content = payload.get('content')
         emotion = payload.get('emotion')
         audio_duration_raw = payload.get('audio_duration')
-        emotion_value = int(emotion) if emotion is not None else None
+        emotion_value = parse_int_or_none(emotion)
         audio_duration = parse_int_or_none(audio_duration_raw)
 
-        if not title or not content or emotion_value is None:
-            return jsonify({'error': 'Title, content and emotion are required'}), 400
+        if not title or not content:
+            return jsonify({'error': 'Title and content are required'}), 400
 
         audio_file = request.files.get('audio')
         if audio_file:
@@ -782,7 +782,8 @@ def update_note(note_id):
 
         note.title = title
         note.content = content
-        note.emotion = emotion_value
+        if emotion_value is not None:
+            note.emotion = emotion_value
         if audio_duration is not None:
             note.audio_duration = audio_duration
         note.sentiment_score = sentiment_score
